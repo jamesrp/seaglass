@@ -1,0 +1,5784 @@
+{
+ "meta": {
+  "ladder": "fast",
+  "anchors": [
+   "9kgamerbot",
+   "9kgamerbot",
+   "9kgamerbot-tempo",
+   "9kgamerbot-tempo",
+   "heuristic",
+   "heuristic"
+  ],
+  "agent_seats": 2,
+  "games": 500,
+  "seed": 5000000,
+  "agent": "runs/school/b/latest.pt (iteration 1800)",
+  "commit": "260cfa92a3ae1bdc758f94a83b3da9c4d406a948",
+  "dirty": false,
+  "engine": "fc723aa93c97",
+  "anchors_fingerprint": "f3c8f4fd0285",
+  "config": {
+   "duos": false,
+   "players": 8,
+   "max_turns": 30,
+   "heroes": true,
+   "hero_offers": 2,
+   "trinkets": true,
+   "dark_gifts": true,
+   "catalog": null,
+   "first_fighter_switch_chance": 0.75,
+   "avoid_recent": 3,
+   "damage_caps": true,
+   "turn_timer": true,
+   "action_ms": 250,
+   "tribes": 5
+  },
+  "search": null,
+  "probe": {
+   "lobbies": 32,
+   "seed": 31000000,
+   "bots": [
+    "9kgamerbot",
+    "9kgamerbot-tempo",
+    "heuristic"
+   ],
+   "per_turn": 32,
+   "min_boards": 16,
+   "sims": 2,
+   "model": null
+  },
+  "probe_library": {
+   "1": 32,
+   "2": 32,
+   "3": 32,
+   "4": 32,
+   "5": 32,
+   "6": 32,
+   "7": 32,
+   "8": 32,
+   "9": 32,
+   "10": 32,
+   "11": 32,
+   "12": 32,
+   "13": 32,
+   "14": 32,
+   "15": 32,
+   "16": 28
+  },
+  "yardstick": {
+   "name": "hspulse-2026-11",
+   "scales": [
+    1.0,
+    0.1
+   ],
+   "min_turn": 10,
+   "max_turn": 16,
+   "sims": 4
+  },
+  "forced_curve": "standard",
+  "created": "2026-11-27T14:31:22+00:00",
+  "seconds": 33.0
+ },
+ "agent": {
+  "seat_games": 1000,
+  "avg_place": 1.769,
+  "stderr": 0.027308781354688026,
+  "top4": 0.973,
+  "first": 0.475,
+  "places": {
+   "1": 475,
+   "2": 405,
+   "3": 62,
+   "4": 31,
+   "5": 8,
+   "6": 7,
+   "7": 4,
+   "8": 8
+  }
+ },
+ "anchors": {
+  "9kgamerbot": {
+   "seat_games": 1000,
+   "avg_place": 5.694,
+   "stderr": 0.05629445916131115,
+   "top4": 0.295,
+   "first": 0.017,
+   "places": {
+    "1": 17,
+    "2": 36,
+    "3": 125,
+    "4": 117,
+    "5": 145,
+    "6": 134,
+    "7": 175,
+    "8": 251
+   }
+  },
+  "9kgamerbot-tempo": {
+   "seat_games": 1000,
+   "avg_place": 5.014,
+   "stderr": 0.051017777560910166,
+   "top4": 0.425,
+   "first": 0.006,
+   "places": {
+    "1": 6,
+    "2": 45,
+    "3": 203,
+    "4": 171,
+    "5": 177,
+    "6": 154,
+    "7": 136,
+    "8": 108
+   }
+  },
+  "heuristic": {
+   "seat_games": 1000,
+   "avg_place": 5.523,
+   "stderr": 0.04677946811662729,
+   "top4": 0.307,
+   "first": 0.002,
+   "places": {
+    "1": 2,
+    "2": 14,
+    "3": 110,
+    "4": 181,
+    "5": 170,
+    "6": 205,
+    "7": 185,
+    "8": 133
+   }
+  }
+ },
+ "by_turn": {
+  "agent": {
+   "1": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.0,
+    "gold_left": 0.166,
+    "health": 44.891,
+    "board": 0.993,
+    "actions": 3.321,
+    "kinds": {
+     "buy": 0.994,
+     "sell": 0.0,
+     "refresh": 0.014,
+     "upgrade_tavern": 0.0,
+     "play": 1.176,
+     "reposition": 0.0,
+     "toggle_freeze": 0.008,
+     "hero_power": 0.0,
+     "choose_discover": 0.126,
+     "forced_upgrade": 0.0
+    },
+    "stats": 5.0,
+    "high": 0.0,
+    "probe": 0.518890625,
+    "probe_se": 0.007485986566448465
+   },
+   "2": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.97,
+    "gold_left": 0.095,
+    "health": 44.43,
+    "board": 1.034,
+    "actions": 2.271,
+    "kinds": {
+     "buy": 0.062,
+     "sell": 0.0,
+     "refresh": 0.031,
+     "upgrade_tavern": 0.0,
+     "play": 0.175,
+     "reposition": 0.0,
+     "toggle_freeze": 0.008,
+     "hero_power": 0.0,
+     "choose_discover": 0.023,
+     "forced_upgrade": 0.97
+    },
+    "stats": 6.0,
+    "high": 0.0,
+    "probe": 0.4973359375,
+    "probe_se": 0.007347583436806951
+   },
+   "3": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.0,
+    "gold_left": 0.53,
+    "health": 43.765,
+    "board": 2.179,
+    "actions": 5.871,
+    "kinds": {
+     "buy": 1.598,
+     "sell": 0.003,
+     "refresh": 0.241,
+     "upgrade_tavern": 0.0,
+     "play": 2.165,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.438,
+     "forced_upgrade": 0.03
+    },
+    "stats": 15.5,
+    "high": 0.0,
+    "probe": 0.447953125,
+    "probe_se": 0.008495222678047313
+   },
+   "4": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.021,
+    "gold_left": 0.274,
+    "health": 41.799,
+    "board": 3.986,
+    "actions": 6.47,
+    "kinds": {
+     "buy": 1.626,
+     "sell": 0.01,
+     "refresh": 0.079,
+     "upgrade_tavern": 0.021,
+     "play": 2.458,
+     "reposition": 0.0,
+     "toggle_freeze": 0.003,
+     "hero_power": 0.0,
+     "choose_discover": 0.746,
+     "forced_upgrade": 0.0
+    },
+    "stats": 31.0,
+    "high": 0.002,
+    "probe": 0.4653125,
+    "probe_se": 0.008316590276557154
+   },
+   "5": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.0,
+    "gold_left": 0.117,
+    "health": 39.355,
+    "board": 4.931,
+    "actions": 5.225,
+    "kinds": {
+     "buy": 0.814,
+     "sell": 0.025,
+     "refresh": 0.083,
+     "upgrade_tavern": 0.0,
+     "play": 1.542,
+     "reposition": 0.0,
+     "toggle_freeze": 0.001,
+     "hero_power": 0.0,
+     "choose_discover": 0.413,
+     "forced_upgrade": 0.979
+    },
+    "stats": 43.0,
+    "high": 0.003,
+    "probe": 0.4343828125,
+    "probe_se": 0.006968503880007789
+   },
+   "6": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.008,
+    "gold_left": 0.35,
+    "health": 35.725,
+    "board": 6.416,
+    "actions": 11.819,
+    "kinds": {
+     "buy": 1.616,
+     "sell": 0.667,
+     "refresh": 0.895,
+     "upgrade_tavern": 0.008,
+     "play": 4.083,
+     "reposition": 0.0,
+     "toggle_freeze": 0.002,
+     "hero_power": 0.0,
+     "choose_discover": 1.382,
+     "forced_upgrade": 0.0
+    },
+    "stats": 85.0,
+    "high": 0.004,
+    "probe": 0.670953125,
+    "probe_se": 0.008576253766191236
+   },
+   "7": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.993,
+    "gold_left": 0.156,
+    "health": 33.607,
+    "board": 6.652,
+    "actions": 10.828,
+    "kinds": {
+     "buy": 1.037,
+     "sell": 1.145,
+     "refresh": 1.039,
+     "upgrade_tavern": 0.0,
+     "play": 3.734,
+     "reposition": 0.0,
+     "toggle_freeze": 0.019,
+     "hero_power": 0.0,
+     "choose_discover": 1.006,
+     "forced_upgrade": 0.985
+    },
+    "stats": 127.0,
+    "high": 0.122,
+    "probe": 0.7381640625,
+    "probe_se": 0.00788135971731099
+   },
+   "8": {
+    "n": 999,
+    "alive": 0.999,
+    "tier": 4.031031031031031,
+    "gold_left": 0.07607607607607608,
+    "health": 31.802802802802802,
+    "board": 6.86986986986987,
+    "actions": 20.463463463463462,
+    "kinds": {
+     "buy": 3.4634634634634636,
+     "sell": 2.2082082082082084,
+     "refresh": 3.7877877877877877,
+     "upgrade_tavern": 0.031031031031031032,
+     "play": 7.7157157157157155,
+     "reposition": 0.0,
+     "toggle_freeze": 0.02702702702702703,
+     "hero_power": 0.0,
+     "choose_discover": 1.3643643643643644,
+     "forced_upgrade": 0.007007007007007007
+    },
+    "stats": 234.0,
+    "high": 0.7817817817817818,
+    "probe": 0.928295482982983,
+    "probe_se": 0.003504867292936805
+   },
+   "9": {
+    "n": 994,
+    "alive": 0.994,
+    "tier": 4.669014084507042,
+    "gold_left": 0.013078470824949699,
+    "health": 30.87122736418511,
+    "board": 6.847082494969819,
+    "actions": 14.678068410462776,
+    "kinds": {
+     "buy": 1.5362173038229376,
+     "sell": 1.4929577464788732,
+     "refresh": 2.3209255533199196,
+     "upgrade_tavern": 0.001006036217303823,
+     "play": 5.516096579476861,
+     "reposition": 0.0,
+     "toggle_freeze": 0.08350100603621731,
+     "hero_power": 0.0,
+     "choose_discover": 0.9104627766599598,
+     "forced_upgrade": 0.6368209255533199
+    },
+    "stats": 369.5,
+    "high": 1.3722334004024146,
+    "probe": 0.955852301307847,
+    "probe_se": 0.0031459636016035707
+   },
+   "10": {
+    "n": 990,
+    "alive": 0.99,
+    "tier": 5.01010101010101,
+    "gold_left": 0.006060606060606061,
+    "health": 29.753535353535355,
+    "board": 6.903030303030303,
+    "actions": 17.38080808080808,
+    "kinds": {
+     "buy": 2.6858585858585857,
+     "sell": 1.215151515151515,
+     "refresh": 4.725252525252525,
+     "upgrade_tavern": 0.00909090909090909,
+     "play": 6.305050505050505,
+     "reposition": 0.0,
+     "toggle_freeze": 0.296969696969697,
+     "hero_power": 0.0,
+     "choose_discover": 0.6717171717171717,
+     "forced_upgrade": 0.3333333333333333
+    },
+    "stats": 562.0,
+    "high": 1.7525252525252526,
+    "probe": 0.9471590909090909,
+    "probe_se": 0.0030112615891896614,
+    "human": [
+     0.00012626262626262624,
+     0.08265345765345894
+    ],
+    "human_n": 990
+   },
+   "11": {
+    "n": 987,
+    "alive": 0.987,
+    "tier": 6.0,
+    "gold_left": 0.0060790273556231,
+    "health": 28.332320162107397,
+    "board": 6.89564336372847,
+    "actions": 10.657548125633232,
+    "kinds": {
+     "buy": 1.1185410334346504,
+     "sell": 0.5785207700101317,
+     "refresh": 2.054711246200608,
+     "upgrade_tavern": 0.0,
+     "play": 3.9625126646403244,
+     "reposition": 0.0,
+     "toggle_freeze": 0.48936170212765956,
+     "hero_power": 0.0,
+     "choose_discover": 0.42249240121580545,
+     "forced_upgrade": 0.9898682877406282
+    },
+    "stats": 742.0,
+    "high": 1.8794326241134751,
+    "probe": 0.9113237715298885,
+    "probe_se": 0.0033015162444715246,
+    "human": [
+     0.0016171771490920428,
+     0.1087015821058386
+    ],
+    "human_n": 987
+   },
+   "12": {
+    "n": 964,
+    "alive": 0.964,
+    "tier": 6.0,
+    "gold_left": 0.054979253112033194,
+    "health": 27.17323651452282,
+    "board": 6.946058091286307,
+    "actions": 19.45850622406639,
+    "kinds": {
+     "buy": 3.16804979253112,
+     "sell": 1.2209543568464731,
+     "refresh": 5.910788381742739,
+     "upgrade_tavern": 0.0,
+     "play": 6.720954356846473,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5881742738589212,
+     "hero_power": 0.0,
+     "choose_discover": 0.766597510373444,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1056.0,
+    "high": 2.240663900414938,
+    "probe": 0.9396395228215768,
+    "probe_se": 0.0036866219903549137,
+    "human": [
+     0.007071895946377275,
+     0.1625538621129907
+    ],
+    "human_n": 964
+   },
+   "13": {
+    "n": 907,
+    "alive": 0.907,
+    "tier": 6.0,
+    "gold_left": 0.05402425578831312,
+    "health": 25.393605292171994,
+    "board": 6.979051819184123,
+    "actions": 18.47960308710033,
+    "kinds": {
+     "buy": 3.183020948180816,
+     "sell": 0.9658213891951488,
+     "refresh": 5.841234840132304,
+     "upgrade_tavern": 0.0,
+     "play": 6.22271223814774,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5479603087100331,
+     "hero_power": 0.0,
+     "choose_discover": 0.6615214994487321,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1397.0,
+    "high": 2.478500551267916,
+    "probe": 0.9348900909592062,
+    "probe_se": 0.004349940312062524,
+    "human": [
+     0.017767788991603774,
+     0.23058900856585504
+    ],
+    "human_n": 907
+   },
+   "14": {
+    "n": 728,
+    "alive": 0.728,
+    "tier": 6.0,
+    "gold_left": 0.22252747252747251,
+    "health": 23.005494505494507,
+    "board": 6.983516483516484,
+    "actions": 18.464285714285715,
+    "kinds": {
+     "buy": 3.1634615384615383,
+     "sell": 1.0123626373626373,
+     "refresh": 5.7541208791208796,
+     "upgrade_tavern": 0.0,
+     "play": 6.321428571428571,
+     "reposition": 0.0,
+     "toggle_freeze": 0.521978021978022,
+     "hero_power": 0.0,
+     "choose_discover": 0.6332417582417582,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1762.5,
+    "high": 2.6717032967032965,
+    "probe": 0.9328425480769231,
+    "probe_se": 0.003902286626094871,
+    "human": [
+     0.029414095519864732,
+     0.3009694632290781
+    ],
+    "human_n": 728
+   },
+   "15": {
+    "n": 427,
+    "alive": 0.427,
+    "tier": 6.0,
+    "gold_left": 0.351288056206089,
+    "health": 19.65807962529274,
+    "board": 6.971896955503513,
+    "actions": 18.75175644028103,
+    "kinds": {
+     "buy": 3.053864168618267,
+     "sell": 1.0608899297423888,
+     "refresh": 6.0843091334894615,
+     "upgrade_tavern": 0.0,
+     "play": 6.351288056206089,
+     "reposition": 0.0,
+     "toggle_freeze": 0.47306791569086654,
+     "hero_power": 0.0,
+     "choose_discover": 0.7002341920374707,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2087.0,
+    "high": 2.782201405152225,
+    "probe": 0.9241803278688525,
+    "probe_se": 0.005515912738950565,
+    "human": [
+     0.03859664925238692,
+     0.3474373986669069
+    ],
+    "human_n": 427
+   },
+   "16": {
+    "n": 212,
+    "alive": 0.212,
+    "tier": 6.0,
+    "gold_left": 0.4386792452830189,
+    "health": 16.141509433962263,
+    "board": 6.990566037735849,
+    "actions": 18.599056603773583,
+    "kinds": {
+     "buy": 2.9292452830188678,
+     "sell": 0.8584905660377359,
+     "refresh": 6.235849056603773,
+     "upgrade_tavern": 0.0,
+     "play": 6.3584905660377355,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5141509433962265,
+     "hero_power": 0.0,
+     "choose_discover": 0.6509433962264151,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2431.5,
+    "high": 2.952830188679245,
+    "probe": 0.9169895552560647,
+    "probe_se": 0.009856046207588436,
+    "human": [
+     0.04694303338171257,
+     0.39840348330914377
+    ],
+    "human_n": 212
+   },
+   "17": {
+    "n": 91,
+    "alive": 0.091,
+    "tier": 6.0,
+    "gold_left": 0.31868131868131866,
+    "health": 14.065934065934066,
+    "board": 7.0,
+    "actions": 17.824175824175825,
+    "kinds": {
+     "buy": 2.7362637362637363,
+     "sell": 0.6923076923076923,
+     "refresh": 6.582417582417582,
+     "upgrade_tavern": 0.0,
+     "play": 5.747252747252747,
+     "reposition": 0.0,
+     "toggle_freeze": 0.4945054945054945,
+     "hero_power": 0.0,
+     "choose_discover": 0.5274725274725275,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2665.0,
+    "high": 2.7472527472527473
+   },
+   "18": {
+    "n": 50,
+    "alive": 0.05,
+    "tier": 6.0,
+    "gold_left": 0.42,
+    "health": 12.88,
+    "board": 7.0,
+    "actions": 18.3,
+    "kinds": {
+     "buy": 3.04,
+     "sell": 0.88,
+     "refresh": 5.68,
+     "upgrade_tavern": 0.0,
+     "play": 6.68,
+     "reposition": 0.0,
+     "toggle_freeze": 0.36,
+     "hero_power": 0.0,
+     "choose_discover": 0.62,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3338.0,
+    "high": 2.56
+   },
+   "19": {
+    "n": 23,
+    "alive": 0.023,
+    "tier": 6.0,
+    "gold_left": 1.173913043478261,
+    "health": 11.478260869565217,
+    "board": 7.0,
+    "actions": 17.869565217391305,
+    "kinds": {
+     "buy": 2.782608695652174,
+     "sell": 0.6521739130434783,
+     "refresh": 5.739130434782608,
+     "upgrade_tavern": 0.0,
+     "play": 6.260869565217392,
+     "reposition": 0.0,
+     "toggle_freeze": 0.6086956521739131,
+     "hero_power": 0.0,
+     "choose_discover": 0.8260869565217391,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3974.0,
+    "high": 2.6956521739130435
+   },
+   "20": {
+    "n": 7,
+    "alive": 0.007,
+    "tier": 6.0,
+    "gold_left": 0.0,
+    "health": 10.285714285714286,
+    "board": 7.0,
+    "actions": 14.0,
+    "kinds": {
+     "buy": 3.0,
+     "sell": 0.0,
+     "refresh": 4.428571428571429,
+     "upgrade_tavern": 0.0,
+     "play": 4.571428571428571,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5714285714285714,
+     "hero_power": 0.0,
+     "choose_discover": 0.42857142857142855,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3810.0,
+    "high": 1.7142857142857142
+   },
+   "21": {
+    "n": 4,
+    "alive": 0.004,
+    "tier": 6.0,
+    "gold_left": 0.0,
+    "health": 10.75,
+    "board": 7.0,
+    "actions": 13.75,
+    "kinds": {
+     "buy": 1.25,
+     "sell": 0.0,
+     "refresh": 8.5,
+     "upgrade_tavern": 0.0,
+     "play": 2.25,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5,
+     "hero_power": 0.0,
+     "choose_discover": 0.25,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3730.0,
+    "high": 1.25
+   },
+   "22": {
+    "n": 3,
+    "alive": 0.003,
+    "tier": 6.0,
+    "gold_left": 0.3333333333333333,
+    "health": 10.666666666666666,
+    "board": 7.0,
+    "actions": 12.333333333333334,
+    "kinds": {
+     "buy": 1.3333333333333333,
+     "sell": 0.0,
+     "refresh": 7.333333333333333,
+     "upgrade_tavern": 0.0,
+     "play": 2.3333333333333335,
+     "reposition": 0.0,
+     "toggle_freeze": 0.3333333333333333,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3578.0,
+    "high": 1.3333333333333333
+   },
+   "23": {
+    "n": 2,
+    "alive": 0.002,
+    "tier": 6.0,
+    "gold_left": 0.5,
+    "health": 10.0,
+    "board": 7.0,
+    "actions": 18.5,
+    "kinds": {
+     "buy": 4.0,
+     "sell": 0.0,
+     "refresh": 6.5,
+     "upgrade_tavern": 0.0,
+     "play": 6.5,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 4417.0,
+    "high": 1.0
+   },
+   "24": {
+    "n": 2,
+    "alive": 0.002,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 10.0,
+    "board": 7.0,
+    "actions": 12.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 7.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.5,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 4630.0,
+    "high": 1.0
+   }
+  },
+  "9kgamerbot": {
+   "1": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.0,
+    "gold_left": 0.066,
+    "health": 44.38,
+    "board": 1.017,
+    "actions": 3.125,
+    "kinds": {
+     "buy": 0.982,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 1.077,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.066,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "2": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.976,
+    "gold_left": 0.092,
+    "health": 43.869,
+    "board": 1.044,
+    "actions": 2.139,
+    "kinds": {
+     "buy": 0.019,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.976,
+     "play": 0.118,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.017,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "3": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.002,
+    "gold_left": 1.79,
+    "health": 43.076,
+    "board": 2.047,
+    "actions": 4.318,
+    "kinds": {
+     "buy": 0.006,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.026,
+     "play": 1.111,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.012,
+     "forced_upgrade": 0.0
+    },
+    "stats": 20.0,
+    "high": 0.0
+   },
+   "4": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.986,
+    "gold_left": 0.816,
+    "health": 41.31,
+    "board": 2.093,
+    "actions": 2.499,
+    "kinds": {
+     "buy": 0.008,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.984,
+     "play": 0.204,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.09,
+     "forced_upgrade": 0.0
+    },
+    "stats": 22.0,
+    "high": 0.0
+   },
+   "5": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.804,
+    "gold_left": 0.056,
+    "health": 36.286,
+    "board": 2.572,
+    "actions": 3.465,
+    "kinds": {
+     "buy": 0.175,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.818,
+     "play": 0.753,
+     "reposition": 0.0,
+     "toggle_freeze": 0.098,
+     "hero_power": 0.0,
+     "choose_discover": 0.234,
+     "forced_upgrade": 0.0
+    },
+    "stats": 23.0,
+    "high": 0.0
+   },
+   "6": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.936,
+    "gold_left": 0.745,
+    "health": 29.508,
+    "board": 4.677,
+    "actions": 8.909,
+    "kinds": {
+     "buy": 1.424,
+     "sell": 0.11,
+     "refresh": 0.03,
+     "upgrade_tavern": 0.132,
+     "play": 3.385,
+     "reposition": 0.0,
+     "toggle_freeze": 0.015,
+     "hero_power": 0.0,
+     "choose_discover": 0.932,
+     "forced_upgrade": 0.0
+    },
+    "stats": 57.0,
+    "high": 0.025
+   },
+   "7": {
+    "n": 996,
+    "alive": 0.996,
+    "tier": 4.051204819277109,
+    "gold_left": 0.7680722891566265,
+    "health": 22.927710843373493,
+    "board": 6.743975903614458,
+    "actions": 10.63152610441767,
+    "kinds": {
+     "buy": 2.1867469879518073,
+     "sell": 0.6877510040160643,
+     "refresh": 0.2720883534136546,
+     "upgrade_tavern": 0.11546184738955824,
+     "play": 4.4397590361445785,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0050200803212851405,
+     "hero_power": 0.0,
+     "choose_discover": 0.9889558232931727,
+     "forced_upgrade": 0.0
+    },
+    "stats": 102.0,
+    "high": 0.17771084337349397
+   },
+   "8": {
+    "n": 957,
+    "alive": 0.957,
+    "tier": 4.35632183908046,
+    "gold_left": 1.2727272727272727,
+    "health": 18.92476489028213,
+    "board": 6.888192267502612,
+    "actions": 14.282131661442007,
+    "kinds": {
+     "buy": 2.7450365726227797,
+     "sell": 2.0564263322884013,
+     "refresh": 1.9268547544409613,
+     "upgrade_tavern": 0.30303030303030304,
+     "play": 5.154649947753396,
+     "reposition": 0.0,
+     "toggle_freeze": 0.025078369905956112,
+     "hero_power": 0.0,
+     "choose_discover": 0.6760710553814002,
+     "forced_upgrade": 0.0
+    },
+    "stats": 145.0,
+    "high": 0.49111807732497387
+   },
+   "9": {
+    "n": 806,
+    "alive": 0.806,
+    "tier": 4.521091811414392,
+    "gold_left": 1.2878411910669976,
+    "health": 15.811414392059554,
+    "board": 6.92803970223325,
+    "actions": 16.696029776674937,
+    "kinds": {
+     "buy": 2.488833746898263,
+     "sell": 2.3089330024813894,
+     "refresh": 2.393300248138958,
+     "upgrade_tavern": 0.10669975186104218,
+     "play": 5.997518610421836,
+     "reposition": 0.0,
+     "toggle_freeze": 0.03225806451612903,
+     "hero_power": 0.0,
+     "choose_discover": 1.1091811414392059,
+     "forced_upgrade": 0.0
+    },
+    "stats": 207.0,
+    "high": 1.088089330024814
+   },
+   "10": {
+    "n": 646,
+    "alive": 0.646,
+    "tier": 5.230650154798762,
+    "gold_left": 1.2507739938080495,
+    "health": 13.509287925696594,
+    "board": 6.958204334365325,
+    "actions": 14.791021671826625,
+    "kinds": {
+     "buy": 2.3374613003095974,
+     "sell": 2.0340557275541795,
+     "refresh": 2.3684210526315788,
+     "upgrade_tavern": 0.6176470588235294,
+     "play": 5.36687306501548,
+     "reposition": 0.0,
+     "toggle_freeze": 0.04024767801857585,
+     "hero_power": 0.0,
+     "choose_discover": 0.7306501547987616,
+     "forced_upgrade": 0.0
+    },
+    "stats": 283.5,
+    "high": 1.6826625386996905
+   },
+   "11": {
+    "n": 454,
+    "alive": 0.454,
+    "tier": 5.29295154185022,
+    "gold_left": 1.330396475770925,
+    "health": 12.409691629955947,
+    "board": 6.975770925110132,
+    "actions": 17.566079295154186,
+    "kinds": {
+     "buy": 2.8480176211453743,
+     "sell": 2.1651982378854626,
+     "refresh": 4.422907488986784,
+     "upgrade_tavern": 0.004405286343612335,
+     "play": 5.828193832599119,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0881057268722467,
+     "hero_power": 0.0,
+     "choose_discover": 0.8612334801762115,
+     "forced_upgrade": 0.0
+    },
+    "stats": 377.0,
+    "high": 2.198237885462555
+   },
+   "12": {
+    "n": 303,
+    "alive": 0.303,
+    "tier": 5.346534653465347,
+    "gold_left": 1.4026402640264026,
+    "health": 10.646864686468646,
+    "board": 6.98019801980198,
+    "actions": 16.834983498349835,
+    "kinds": {
+     "buy": 2.4554455445544554,
+     "sell": 1.702970297029703,
+     "refresh": 4.910891089108911,
+     "upgrade_tavern": 0.0033003300330033004,
+     "play": 5.475247524752476,
+     "reposition": 0.0,
+     "toggle_freeze": 0.10891089108910891,
+     "hero_power": 0.0,
+     "choose_discover": 0.8382838283828383,
+     "forced_upgrade": 0.0
+    },
+    "stats": 488.0,
+    "high": 2.557755775577558
+   },
+   "13": {
+    "n": 150,
+    "alive": 0.15,
+    "tier": 5.993333333333333,
+    "gold_left": 1.4266666666666667,
+    "health": 10.086666666666666,
+    "board": 6.986666666666666,
+    "actions": 11.84,
+    "kinds": {
+     "buy": 1.7066666666666668,
+     "sell": 0.98,
+     "refresh": 2.6866666666666665,
+     "upgrade_tavern": 0.5866666666666667,
+     "play": 3.8466666666666667,
+     "reposition": 0.0,
+     "toggle_freeze": 0.15333333333333332,
+     "hero_power": 0.0,
+     "choose_discover": 0.6133333333333333,
+     "forced_upgrade": 0.0
+    },
+    "stats": 712.0,
+    "high": 2.7266666666666666
+   },
+   "14": {
+    "n": 64,
+    "alive": 0.064,
+    "tier": 6.0,
+    "gold_left": 1.34375,
+    "health": 11.921875,
+    "board": 7.0,
+    "actions": 15.671875,
+    "kinds": {
+     "buy": 2.25,
+     "sell": 1.484375,
+     "refresh": 4.78125,
+     "upgrade_tavern": 0.0,
+     "play": 4.765625,
+     "reposition": 0.0,
+     "toggle_freeze": 0.140625,
+     "hero_power": 0.0,
+     "choose_discover": 0.875,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1055.5,
+    "high": 2.953125
+   },
+   "15": {
+    "n": 27,
+    "alive": 0.027,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 11.481481481481481,
+    "board": 7.0,
+    "actions": 14.925925925925926,
+    "kinds": {
+     "buy": 1.7777777777777777,
+     "sell": 1.3703703703703705,
+     "refresh": 5.481481481481482,
+     "upgrade_tavern": 0.0,
+     "play": 4.2592592592592595,
+     "reposition": 0.0,
+     "toggle_freeze": 0.037037037037037035,
+     "hero_power": 0.0,
+     "choose_discover": 0.5925925925925926,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1653.0,
+    "high": 3.259259259259259
+   },
+   "16": {
+    "n": 10,
+    "alive": 0.01,
+    "tier": 6.0,
+    "gold_left": 1.2,
+    "health": 15.8,
+    "board": 7.0,
+    "actions": 14.4,
+    "kinds": {
+     "buy": 1.8,
+     "sell": 1.2,
+     "refresh": 5.8,
+     "upgrade_tavern": 0.0,
+     "play": 3.6,
+     "reposition": 0.0,
+     "toggle_freeze": 0.3,
+     "hero_power": 0.0,
+     "choose_discover": 0.4,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2121.0,
+    "high": 3.5
+   },
+   "17": {
+    "n": 4,
+    "alive": 0.004,
+    "tier": 6.0,
+    "gold_left": 1.25,
+    "health": 25.5,
+    "board": 7.0,
+    "actions": 15.5,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.5,
+     "refresh": 6.75,
+     "upgrade_tavern": 0.0,
+     "play": 3.75,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5,
+     "hero_power": 0.0,
+     "choose_discover": 1.25,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2860.5,
+    "high": 2.5
+   },
+   "18": {
+    "n": 3,
+    "alive": 0.003,
+    "tier": 6.0,
+    "gold_left": 1.3333333333333333,
+    "health": 25.0,
+    "board": 7.0,
+    "actions": 14.666666666666666,
+    "kinds": {
+     "buy": 1.3333333333333333,
+     "sell": 0.3333333333333333,
+     "refresh": 5.666666666666667,
+     "upgrade_tavern": 0.0,
+     "play": 4.333333333333333,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.6666666666666667,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1749.0,
+    "high": 3.0
+   },
+   "19": {
+    "n": 2,
+    "alive": 0.002,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 36.0,
+    "board": 7.0,
+    "actions": 17.5,
+    "kinds": {
+     "buy": 2.5,
+     "sell": 2.0,
+     "refresh": 4.5,
+     "upgrade_tavern": 0.0,
+     "play": 6.5,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.5,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3761.0,
+    "high": 2.5
+   },
+   "20": {
+    "n": 2,
+    "alive": 0.002,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 19.5,
+    "board": 7.0,
+    "actions": 20.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 2.0,
+     "refresh": 8.0,
+     "upgrade_tavern": 0.0,
+     "play": 7.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.5,
+     "forced_upgrade": 0.0
+    },
+    "stats": 4332.5,
+    "high": 2.5
+   },
+   "21": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 22.0,
+    "board": 7.0,
+    "actions": 10.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 7.0,
+     "upgrade_tavern": 0.0,
+     "play": 1.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2502.0,
+    "high": 2.0
+   },
+   "22": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 3.0,
+    "health": 22.0,
+    "board": 7.0,
+    "actions": 8.0,
+    "kinds": {
+     "buy": 0.0,
+     "sell": 0.0,
+     "refresh": 7.0,
+     "upgrade_tavern": 0.0,
+     "play": 0.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2680.0,
+    "high": 2.0
+   }
+  },
+  "9kgamerbot-tempo": {
+   "1": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.0,
+    "gold_left": 0.086,
+    "health": 44.367,
+    "board": 1.018,
+    "actions": 3.156,
+    "kinds": {
+     "buy": 0.979,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 1.093,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.084,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "2": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.974,
+    "gold_left": 0.076,
+    "health": 43.86,
+    "board": 1.058,
+    "actions": 2.176,
+    "kinds": {
+     "buy": 0.025,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.974,
+     "play": 0.134,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.028,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "3": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.974,
+    "gold_left": 1.758,
+    "health": 43.089,
+    "board": 2.083,
+    "actions": 4.414,
+    "kinds": {
+     "buy": 0.013,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 1.138,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.046,
+     "forced_upgrade": 0.0
+    },
+    "stats": 20.0,
+    "high": 0.0
+   },
+   "4": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.0,
+    "gold_left": 0.515,
+    "health": 41.41,
+    "board": 3.802,
+    "actions": 6.236,
+    "kinds": {
+     "buy": 0.726,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.026,
+     "play": 2.056,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.143,
+     "forced_upgrade": 0.0
+    },
+    "stats": 39.0,
+    "high": 0.0
+   },
+   "5": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.702,
+    "gold_left": 0.12,
+    "health": 39.83,
+    "board": 5.294,
+    "actions": 6.655,
+    "kinds": {
+     "buy": 0.266,
+     "sell": 0.01,
+     "refresh": 0.002,
+     "upgrade_tavern": 0.702,
+     "play": 2.169,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.176,
+     "forced_upgrade": 0.0
+    },
+    "stats": 61.0,
+    "high": 0.0
+   },
+   "6": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.946,
+    "gold_left": 1.615,
+    "health": 37.811,
+    "board": 6.749,
+    "actions": 8.805,
+    "kinds": {
+     "buy": 1.354,
+     "sell": 0.475,
+     "refresh": 0.504,
+     "upgrade_tavern": 0.244,
+     "play": 3.354,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.408,
+     "forced_upgrade": 0.0
+    },
+    "stats": 88.0,
+    "high": 0.001
+   },
+   "7": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.702,
+    "gold_left": 1.711,
+    "health": 34.113,
+    "board": 6.771,
+    "actions": 9.71,
+    "kinds": {
+     "buy": 1.314,
+     "sell": 1.24,
+     "refresh": 0.956,
+     "upgrade_tavern": 0.756,
+     "play": 3.512,
+     "reposition": 0.0,
+     "toggle_freeze": 0.006,
+     "hero_power": 0.0,
+     "choose_discover": 0.441,
+     "forced_upgrade": 0.0
+    },
+    "stats": 110.0,
+    "high": 0.072
+   },
+   "8": {
+    "n": 997,
+    "alive": 0.997,
+    "tier": 4.465396188565697,
+    "gold_left": 1.2617853560682046,
+    "health": 29.28986960882648,
+    "board": 6.848545636910732,
+    "actions": 10.415245737211634,
+    "kinds": {
+     "buy": 1.3059177532597794,
+     "sell": 1.2076228686058175,
+     "refresh": 1.0912738214643931,
+     "upgrade_tavern": 0.7642928786359077,
+     "play": 3.9408224674022065,
+     "reposition": 0.0,
+     "toggle_freeze": 0.11634904714142427,
+     "hero_power": 0.0,
+     "choose_discover": 0.6078234704112337,
+     "forced_upgrade": 0.0
+    },
+    "stats": 137.0,
+    "high": 0.2768304914744233
+   },
+   "9": {
+    "n": 960,
+    "alive": 0.96,
+    "tier": 4.691666666666666,
+    "gold_left": 1.2416666666666667,
+    "health": 22.822916666666668,
+    "board": 6.967708333333333,
+    "actions": 16.103125,
+    "kinds": {
+     "buy": 2.294791666666667,
+     "sell": 2.375,
+     "refresh": 1.7614583333333333,
+     "upgrade_tavern": 0.22291666666666668,
+     "play": 6.021875,
+     "reposition": 0.0,
+     "toggle_freeze": 0.05625,
+     "hero_power": 0.0,
+     "choose_discover": 1.053125,
+     "forced_upgrade": 0.0
+    },
+    "stats": 196.0,
+    "high": 1.0166666666666666
+   },
+   "10": {
+    "n": 818,
+    "alive": 0.818,
+    "tier": 5.229828850855745,
+    "gold_left": 1.2298288508557458,
+    "health": 18.38875305623472,
+    "board": 6.97677261613692,
+    "actions": 14.904645476772616,
+    "kinds": {
+     "buy": 2.3447432762836184,
+     "sell": 2.1210268948655258,
+     "refresh": 2.3190709046454767,
+     "upgrade_tavern": 0.5036674816625917,
+     "play": 5.512224938875305,
+     "reposition": 0.0,
+     "toggle_freeze": 0.06356968215158924,
+     "hero_power": 0.0,
+     "choose_discover": 0.7090464547677262,
+     "forced_upgrade": 0.0
+    },
+    "stats": 261.0,
+    "high": 1.5183374083129584
+   },
+   "11": {
+    "n": 627,
+    "alive": 0.627,
+    "tier": 5.385964912280702,
+    "gold_left": 1.2105263157894737,
+    "health": 15.5311004784689,
+    "board": 6.968102073365231,
+    "actions": 17.43859649122807,
+    "kinds": {
+     "buy": 2.7974481658692185,
+     "sell": 2.291866028708134,
+     "refresh": 3.9776714513556617,
+     "upgrade_tavern": 0.11483253588516747,
+     "play": 6.027113237639553,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0733652312599681,
+     "hero_power": 0.0,
+     "choose_discover": 0.7990430622009569,
+     "forced_upgrade": 0.0
+    },
+    "stats": 343.0,
+    "high": 2.0956937799043063
+   },
+   "12": {
+    "n": 410,
+    "alive": 0.41,
+    "tier": 5.492682926829269,
+    "gold_left": 1.326829268292683,
+    "health": 13.263414634146342,
+    "board": 6.970731707317073,
+    "actions": 18.568292682926828,
+    "kinds": {
+     "buy": 2.709756097560976,
+     "sell": 2.1707317073170733,
+     "refresh": 4.9609756097560975,
+     "upgrade_tavern": 0.024390243902439025,
+     "play": 6.3707317073170735,
+     "reposition": 0.0,
+     "toggle_freeze": 0.08780487804878048,
+     "hero_power": 0.0,
+     "choose_discover": 0.8780487804878049,
+     "forced_upgrade": 0.0
+    },
+    "stats": 461.5,
+    "high": 2.5926829268292684
+   },
+   "13": {
+    "n": 218,
+    "alive": 0.218,
+    "tier": 5.977064220183486,
+    "gold_left": 1.2889908256880733,
+    "health": 11.064220183486238,
+    "board": 6.981651376146789,
+    "actions": 14.444954128440367,
+    "kinds": {
+     "buy": 1.9220183486238531,
+     "sell": 1.348623853211009,
+     "refresh": 3.6055045871559632,
+     "upgrade_tavern": 0.44495412844036697,
+     "play": 4.940366972477064,
+     "reposition": 0.0,
+     "toggle_freeze": 0.13302752293577982,
+     "hero_power": 0.0,
+     "choose_discover": 0.7385321100917431,
+     "forced_upgrade": 0.0
+    },
+    "stats": 596.5,
+    "high": 2.756880733944954
+   },
+   "14": {
+    "n": 74,
+    "alive": 0.074,
+    "tier": 5.986486486486487,
+    "gold_left": 1.2972972972972974,
+    "health": 10.04054054054054,
+    "board": 6.972972972972973,
+    "actions": 17.7972972972973,
+    "kinds": {
+     "buy": 2.2432432432432434,
+     "sell": 1.5135135135135136,
+     "refresh": 5.8108108108108105,
+     "upgrade_tavern": 0.0,
+     "play": 5.783783783783784,
+     "reposition": 0.0,
+     "toggle_freeze": 0.20270270270270271,
+     "hero_power": 0.0,
+     "choose_discover": 0.9594594594594594,
+     "forced_upgrade": 0.0
+    },
+    "stats": 857.0,
+    "high": 2.7027027027027026
+   },
+   "15": {
+    "n": 23,
+    "alive": 0.023,
+    "tier": 6.0,
+    "gold_left": 1.2608695652173914,
+    "health": 10.0,
+    "board": 6.956521739130435,
+    "actions": 15.956521739130435,
+    "kinds": {
+     "buy": 1.608695652173913,
+     "sell": 1.0869565217391304,
+     "refresh": 6.782608695652174,
+     "upgrade_tavern": 0.0,
+     "play": 4.304347826086956,
+     "reposition": 0.0,
+     "toggle_freeze": 0.17391304347826086,
+     "hero_power": 0.0,
+     "choose_discover": 0.7391304347826086,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1139.0,
+    "high": 2.869565217391304
+   },
+   "16": {
+    "n": 8,
+    "alive": 0.008,
+    "tier": 6.0,
+    "gold_left": 1.125,
+    "health": 14.375,
+    "board": 7.0,
+    "actions": 17.5,
+    "kinds": {
+     "buy": 1.875,
+     "sell": 1.0,
+     "refresh": 6.125,
+     "upgrade_tavern": 0.0,
+     "play": 5.5,
+     "reposition": 0.0,
+     "toggle_freeze": 0.5,
+     "hero_power": 0.0,
+     "choose_discover": 1.125,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1891.5,
+    "high": 2.0
+   },
+   "17": {
+    "n": 3,
+    "alive": 0.003,
+    "tier": 6.0,
+    "gold_left": 1.6666666666666667,
+    "health": 17.333333333333332,
+    "board": 7.0,
+    "actions": 13.666666666666666,
+    "kinds": {
+     "buy": 0.6666666666666666,
+     "sell": 0.0,
+     "refresh": 6.0,
+     "upgrade_tavern": 0.0,
+     "play": 5.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.3333333333333333,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2479.0,
+    "high": 3.0
+   },
+   "18": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 0.0,
+    "health": 30.0,
+    "board": 7.0,
+    "actions": 21.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 4.0,
+     "upgrade_tavern": 0.0,
+     "play": 13.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3971.0,
+    "high": 5.0
+   },
+   "19": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 20.0,
+    "board": 7.0,
+    "actions": 21.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 4.0,
+     "upgrade_tavern": 0.0,
+     "play": 13.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 4459.0,
+    "high": 5.0
+   },
+   "20": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 0.0,
+    "health": 13.0,
+    "board": 7.0,
+    "actions": 24.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 6.0,
+     "upgrade_tavern": 0.0,
+     "play": 13.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 5031.0,
+    "high": 5.0
+   },
+   "21": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 1.0,
+    "health": 6.0,
+    "board": 7.0,
+    "actions": 21.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 4.0,
+     "upgrade_tavern": 0.0,
+     "play": 13.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1912.0,
+    "high": 5.0
+   }
+  },
+  "heuristic": {
+   "1": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.0,
+    "gold_left": 0.067,
+    "health": 44.176,
+    "board": 1.002,
+    "actions": 3.172,
+    "kinds": {
+     "buy": 0.998,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 1.097,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.077,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "2": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.983,
+    "gold_left": 0.062,
+    "health": 43.673,
+    "board": 1.03,
+    "actions": 2.191,
+    "kinds": {
+     "buy": 0.045,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.983,
+     "play": 0.143,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.019,
+     "forced_upgrade": 0.0
+    },
+    "stats": 6.0,
+    "high": 0.0
+   },
+   "3": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 1.983,
+    "gold_left": 0.563,
+    "health": 42.779,
+    "board": 2.36,
+    "actions": 6.321,
+    "kinds": {
+     "buy": 0.623,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.09,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.182,
+     "forced_upgrade": 0.0
+    },
+    "stats": 23.0,
+    "high": 0.0
+   },
+   "4": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.0,
+    "gold_left": 0.336,
+    "health": 41.696,
+    "board": 4.153,
+    "actions": 7.218,
+    "kinds": {
+     "buy": 0.789,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.017,
+     "play": 2.541,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.239,
+     "forced_upgrade": 0.0
+    },
+    "stats": 45.0,
+    "high": 0.0
+   },
+   "5": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 2.983,
+    "gold_left": 0.083,
+    "health": 40.429,
+    "board": 5.337,
+    "actions": 6.176,
+    "kinds": {
+     "buy": 0.094,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.983,
+     "play": 1.911,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.139,
+     "forced_upgrade": 0.0
+    },
+    "stats": 64.0,
+    "high": 0.0
+   },
+   "6": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 3.418,
+    "gold_left": 0.754,
+    "health": 38.698,
+    "board": 6.543,
+    "actions": 7.698,
+    "kinds": {
+     "buy": 1.082,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.435,
+     "play": 2.983,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.428,
+     "forced_upgrade": 0.0
+    },
+    "stats": 91.0,
+    "high": 0.004
+   },
+   "7": {
+    "n": 1000,
+    "alive": 1.0,
+    "tier": 4.382,
+    "gold_left": 0.598,
+    "health": 35.761,
+    "board": 6.601,
+    "actions": 5.322,
+    "kinds": {
+     "buy": 0.477,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.964,
+     "play": 1.849,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.3,
+     "forced_upgrade": 0.0
+    },
+    "stats": 106.0,
+    "high": 0.027
+   },
+   "8": {
+    "n": 999,
+    "alive": 0.999,
+    "tier": 5.37037037037037,
+    "gold_left": 0.7557557557557557,
+    "health": 30.72272272272272,
+    "board": 6.737737737737738,
+    "actions": 5.327327327327327,
+    "kinds": {
+     "buy": 0.3113113113113113,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.987987987987988,
+     "play": 1.996996996996997,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.40540540540540543,
+     "forced_upgrade": 0.0
+    },
+    "stats": 124.0,
+    "high": 0.12712712712712712
+   },
+   "9": {
+    "n": 946,
+    "alive": 0.946,
+    "tier": 5.602536997885835,
+    "gold_left": 2.9693446088794926,
+    "health": 23.3446088794926,
+    "board": 6.9778012684989426,
+    "actions": 7.989429175475687,
+    "kinds": {
+     "buy": 0.8826638477801269,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.24735729386892177,
+     "play": 3.040169133192389,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.8298097251585623,
+     "forced_upgrade": 0.0
+    },
+    "stats": 162.0,
+    "high": 0.25158562367864695
+   },
+   "10": {
+    "n": 776,
+    "alive": 0.776,
+    "tier": 5.972938144329897,
+    "gold_left": 4.560567010309279,
+    "health": 18.375,
+    "board": 6.992268041237113,
+    "actions": 6.353092783505154,
+    "kinds": {
+     "buy": 0.7989690721649485,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.3904639175257732,
+     "play": 2.5747422680412373,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.47164948453608246,
+     "forced_upgrade": 0.0
+    },
+    "stats": 199.0,
+    "high": 0.2654639175257732
+   },
+   "11": {
+    "n": 527,
+    "alive": 0.527,
+    "tier": 6.0,
+    "gold_left": 6.497153700189753,
+    "health": 14.905123339658443,
+    "board": 7.0,
+    "actions": 6.6394686907020875,
+    "kinds": {
+     "buy": 0.952561669829222,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.036053130929791274,
+     "play": 2.747628083491461,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.6280834914611005,
+     "forced_upgrade": 0.0
+    },
+    "stats": 255.0,
+    "high": 0.31309297912713474
+   },
+   "12": {
+    "n": 279,
+    "alive": 0.279,
+    "tier": 6.0,
+    "gold_left": 6.56989247311828,
+    "health": 12.577060931899641,
+    "board": 6.992831541218638,
+    "actions": 7.168458781362007,
+    "kinds": {
+     "buy": 1.043010752688172,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 3.078853046594982,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.6702508960573477,
+     "forced_upgrade": 0.0
+    },
+    "stats": 343.0,
+    "high": 0.34050179211469533
+   },
+   "13": {
+    "n": 104,
+    "alive": 0.104,
+    "tier": 6.0,
+    "gold_left": 6.9423076923076925,
+    "health": 11.971153846153847,
+    "board": 7.0,
+    "actions": 6.5576923076923075,
+    "kinds": {
+     "buy": 0.875,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.9134615384615383,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.5096153846153846,
+     "forced_upgrade": 0.0
+    },
+    "stats": 456.5,
+    "high": 0.38461538461538464
+   },
+   "14": {
+    "n": 33,
+    "alive": 0.033,
+    "tier": 6.0,
+    "gold_left": 7.666666666666667,
+    "health": 13.818181818181818,
+    "board": 7.0,
+    "actions": 6.090909090909091,
+    "kinds": {
+     "buy": 0.7878787878787878,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.6363636363636362,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.5151515151515151,
+     "forced_upgrade": 0.0
+    },
+    "stats": 666.0,
+    "high": 0.5454545454545454
+   },
+   "15": {
+    "n": 8,
+    "alive": 0.008,
+    "tier": 6.0,
+    "gold_left": 7.375,
+    "health": 16.625,
+    "board": 7.0,
+    "actions": 6.125,
+    "kinds": {
+     "buy": 0.875,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 3.125,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.125,
+     "forced_upgrade": 0.0
+    },
+    "stats": 1874.5,
+    "high": 0.5
+   },
+   "16": {
+    "n": 5,
+    "alive": 0.005,
+    "tier": 6.0,
+    "gold_left": 8.0,
+    "health": 20.6,
+    "board": 7.0,
+    "actions": 6.0,
+    "kinds": {
+     "buy": 0.8,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.4,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 1.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 2824.0,
+    "high": 0.4
+   },
+   "17": {
+    "n": 4,
+    "alive": 0.004,
+    "tier": 6.0,
+    "gold_left": 7.0,
+    "health": 7.0,
+    "board": 7.0,
+    "actions": 5.0,
+    "kinds": {
+     "buy": 0.75,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.25,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3889.5,
+    "high": 0.5
+   },
+   "18": {
+    "n": 1,
+    "alive": 0.001,
+    "tier": 6.0,
+    "gold_left": 6.0,
+    "health": 4.0,
+    "board": 7.0,
+    "actions": 6.0,
+    "kinds": {
+     "buy": 1.0,
+     "sell": 0.0,
+     "refresh": 0.0,
+     "upgrade_tavern": 0.0,
+     "play": 2.0,
+     "reposition": 0.0,
+     "toggle_freeze": 0.0,
+     "hero_power": 0.0,
+     "choose_discover": 0.0,
+     "forced_upgrade": 0.0
+    },
+    "stats": 3524.0,
+    "high": 1.0
+   }
+  }
+ },
+ "behavior": {
+  "agent": {
+   "tier_at": {
+    "3": 2.0,
+    "5": 3.0,
+    "7": 3.993,
+    "9": 4.669014084507042,
+    "11": 6.0
+   },
+   "gold_left": 0.16518415566365532,
+   "actions_per_turn": 11.999583043780403,
+   "final_types": {
+    "mech": 0.35,
+    "dragon": 0.287,
+    "none": 0.177,
+    "pirate": 0.139,
+    "demon": 0.019,
+    "undead": 0.019,
+    "quilboar": 0.003,
+    "aberration": 0.002,
+    "beast": 0.002,
+    "elemental": 0.001,
+    "murloc": 0.001
+   }
+  },
+  "9kgamerbot": {
+   "tier_at": {
+    "3": 2.002,
+    "5": 3.804,
+    "7": 4.051204819277109,
+    "9": 4.521091811414392,
+    "11": 5.29295154185022
+   },
+   "gold_left": 0.8420295415307885,
+   "actions_per_turn": 8.471609437943602,
+   "final_types": {
+    "dragon": 0.168,
+    "none": 0.165,
+    "elemental": 0.105,
+    "undead": 0.103,
+    "murloc": 0.085,
+    "beast": 0.077,
+    "aberration": 0.063,
+    "quilboar": 0.063,
+    "demon": 0.059,
+    "mech": 0.057,
+    "pirate": 0.055
+   }
+  },
+  "9kgamerbot-tempo": {
+   "tier_at": {
+    "3": 1.974,
+    "5": 2.702,
+    "7": 3.702,
+    "9": 4.691666666666666,
+    "11": 5.385964912280702
+   },
+   "gold_left": 0.9928199605097828,
+   "actions_per_turn": 9.229492012206068,
+   "final_types": {
+    "none": 0.253,
+    "dragon": 0.165,
+    "undead": 0.13,
+    "elemental": 0.078,
+    "murloc": 0.072,
+    "mech": 0.062,
+    "pirate": 0.061,
+    "quilboar": 0.055,
+    "beast": 0.049,
+    "demon": 0.045,
+    "aberration": 0.03
+   }
+  },
+  "heuristic": {
+   "tier_at": {
+    "3": 1.983,
+    "5": 2.983,
+    "7": 4.382,
+    "9": 5.602536997885835,
+    "11": 6.0
+   },
+   "gold_left": 1.4913873806403295,
+   "actions_per_turn": 5.841134618985209,
+   "final_types": {
+    "none": 0.783,
+    "dragon": 0.063,
+    "murloc": 0.051,
+    "quilboar": 0.033,
+    "pirate": 0.019,
+    "beast": 0.018,
+    "elemental": 0.009,
+    "aberration": 0.007,
+    "demon": 0.007,
+    "undead": 0.007,
+    "mech": 0.003
+   }
+  }
+ },
+ "lobbies": [
+  {
+   "seed": 5000000,
+   "agent_places": [
+    5,
+    1
+   ]
+  },
+  {
+   "seed": 5000001,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000002,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000003,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000004,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000005,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000006,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000007,
+   "agent_places": [
+    2,
+    3
+   ]
+  },
+  {
+   "seed": 5000008,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000009,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000010,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000011,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000012,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000013,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000014,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000015,
+   "agent_places": [
+    1,
+    8
+   ]
+  },
+  {
+   "seed": 5000016,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000017,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000018,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000019,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000020,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000021,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000022,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000023,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000024,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000025,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000026,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000027,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000028,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000029,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000030,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000031,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000032,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000033,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000034,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000035,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000036,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000037,
+   "agent_places": [
+    8,
+    1
+   ]
+  },
+  {
+   "seed": 5000038,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000039,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000040,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000041,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000042,
+   "agent_places": [
+    1,
+    7
+   ]
+  },
+  {
+   "seed": 5000043,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000044,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000045,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000046,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000047,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000048,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000049,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000050,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000051,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000052,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000053,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000054,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000055,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000056,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000057,
+   "agent_places": [
+    1,
+    5
+   ]
+  },
+  {
+   "seed": 5000058,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000059,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000060,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000061,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000062,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000063,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000064,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000065,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000066,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000067,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000068,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000069,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000070,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000071,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000072,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000073,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000074,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000075,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000076,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000077,
+   "agent_places": [
+    2,
+    4
+   ]
+  },
+  {
+   "seed": 5000078,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000079,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000080,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000081,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000082,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000083,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000084,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000085,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000086,
+   "agent_places": [
+    6,
+    1
+   ]
+  },
+  {
+   "seed": 5000087,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000088,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000089,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000090,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000091,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000092,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000093,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000094,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000095,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000096,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000097,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000098,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000099,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000100,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000101,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000102,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000103,
+   "agent_places": [
+    6,
+    1
+   ]
+  },
+  {
+   "seed": 5000104,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000105,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000106,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000107,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000108,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000109,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000110,
+   "agent_places": [
+    1,
+    8
+   ]
+  },
+  {
+   "seed": 5000111,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000112,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000113,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000114,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000115,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000116,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000117,
+   "agent_places": [
+    2,
+    4
+   ]
+  },
+  {
+   "seed": 5000118,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000119,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000120,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000121,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000122,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000123,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000124,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000125,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000126,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000127,
+   "agent_places": [
+    5,
+    4
+   ]
+  },
+  {
+   "seed": 5000128,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000129,
+   "agent_places": [
+    1,
+    7
+   ]
+  },
+  {
+   "seed": 5000130,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000131,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000132,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000133,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000134,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000135,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000136,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000137,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000138,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000139,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000140,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000141,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000142,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000143,
+   "agent_places": [
+    8,
+    1
+   ]
+  },
+  {
+   "seed": 5000144,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000145,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000146,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000147,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000148,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000149,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000150,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000151,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000152,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000153,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000154,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000155,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000156,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000157,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000158,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000159,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000160,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000161,
+   "agent_places": [
+    2,
+    4
+   ]
+  },
+  {
+   "seed": 5000162,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000163,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000164,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000165,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000166,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000167,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000168,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000169,
+   "agent_places": [
+    8,
+    1
+   ]
+  },
+  {
+   "seed": 5000170,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000171,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000172,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000173,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000174,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000175,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000176,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000177,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000178,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000179,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000180,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000181,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000182,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000183,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000184,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000185,
+   "agent_places": [
+    1,
+    5
+   ]
+  },
+  {
+   "seed": 5000186,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000187,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000188,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000189,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000190,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000191,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000192,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000193,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000194,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000195,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000196,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000197,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000198,
+   "agent_places": [
+    2,
+    6
+   ]
+  },
+  {
+   "seed": 5000199,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000200,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000201,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000202,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000203,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000204,
+   "agent_places": [
+    1,
+    7
+   ]
+  },
+  {
+   "seed": 5000205,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000206,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000207,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000208,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000209,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000210,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000211,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000212,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000213,
+   "agent_places": [
+    1,
+    5
+   ]
+  },
+  {
+   "seed": 5000214,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000215,
+   "agent_places": [
+    1,
+    6
+   ]
+  },
+  {
+   "seed": 5000216,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000217,
+   "agent_places": [
+    2,
+    3
+   ]
+  },
+  {
+   "seed": 5000218,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000219,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000220,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000221,
+   "agent_places": [
+    1,
+    6
+   ]
+  },
+  {
+   "seed": 5000222,
+   "agent_places": [
+    6,
+    1
+   ]
+  },
+  {
+   "seed": 5000223,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000224,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000225,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000226,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000227,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000228,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000229,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000230,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000231,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000232,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000233,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000234,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000235,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000236,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000237,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000238,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000239,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000240,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000241,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000242,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000243,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000244,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000245,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000246,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000247,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000248,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000249,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000250,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000251,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000252,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000253,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000254,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000255,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000256,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000257,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000258,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000259,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000260,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000261,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000262,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000263,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000264,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000265,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000266,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000267,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000268,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000269,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000270,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000271,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000272,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000273,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000274,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000275,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000276,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000277,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000278,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000279,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000280,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000281,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000282,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000283,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000284,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000285,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000286,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000287,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000288,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000289,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000290,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000291,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000292,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000293,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000294,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000295,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000296,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000297,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000298,
+   "agent_places": [
+    1,
+    5
+   ]
+  },
+  {
+   "seed": 5000299,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000300,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000301,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000302,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000303,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000304,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000305,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000306,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000307,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000308,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000309,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000310,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000311,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000312,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000313,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000314,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000315,
+   "agent_places": [
+    2,
+    3
+   ]
+  },
+  {
+   "seed": 5000316,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000317,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000318,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000319,
+   "agent_places": [
+    8,
+    1
+   ]
+  },
+  {
+   "seed": 5000320,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000321,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000322,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000323,
+   "agent_places": [
+    5,
+    1
+   ]
+  },
+  {
+   "seed": 5000324,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000325,
+   "agent_places": [
+    3,
+    4
+   ]
+  },
+  {
+   "seed": 5000326,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000327,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000328,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000329,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000330,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000331,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000332,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000333,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000334,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000335,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000336,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000337,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000338,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000339,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000340,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000341,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000342,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000343,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000344,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000345,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000346,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000347,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000348,
+   "agent_places": [
+    2,
+    3
+   ]
+  },
+  {
+   "seed": 5000349,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000350,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000351,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000352,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000353,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000354,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000355,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000356,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000357,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000358,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000359,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000360,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000361,
+   "agent_places": [
+    2,
+    3
+   ]
+  },
+  {
+   "seed": 5000362,
+   "agent_places": [
+    8,
+    1
+   ]
+  },
+  {
+   "seed": 5000363,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000364,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000365,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000366,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000367,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000368,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000369,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000370,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000371,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000372,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000373,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000374,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000375,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000376,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000377,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000378,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000379,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000380,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000381,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000382,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000383,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000384,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000385,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000386,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000387,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000388,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000389,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000390,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000391,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000392,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000393,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000394,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000395,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000396,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000397,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000398,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000399,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000400,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000401,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000402,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000403,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000404,
+   "agent_places": [
+    1,
+    6
+   ]
+  },
+  {
+   "seed": 5000405,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000406,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000407,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000408,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000409,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000410,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000411,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000412,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000413,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000414,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000415,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000416,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000417,
+   "agent_places": [
+    1,
+    7
+   ]
+  },
+  {
+   "seed": 5000418,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000419,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000420,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000421,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000422,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000423,
+   "agent_places": [
+    4,
+    2
+   ]
+  },
+  {
+   "seed": 5000424,
+   "agent_places": [
+    1,
+    4
+   ]
+  },
+  {
+   "seed": 5000425,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000426,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000427,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000428,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000429,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000430,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000431,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000432,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000433,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000434,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000435,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000436,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000437,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000438,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000439,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000440,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000441,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000442,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000443,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000444,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000445,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000446,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000447,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000448,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000449,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000450,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000451,
+   "agent_places": [
+    4,
+    1
+   ]
+  },
+  {
+   "seed": 5000452,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000453,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000454,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000455,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000456,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000457,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000458,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000459,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000460,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000461,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000462,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000463,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000464,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000465,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000466,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000467,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000468,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000469,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000470,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000471,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000472,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000473,
+   "agent_places": [
+    1,
+    8
+   ]
+  },
+  {
+   "seed": 5000474,
+   "agent_places": [
+    5,
+    2
+   ]
+  },
+  {
+   "seed": 5000475,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000476,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000477,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000478,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000479,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000480,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000481,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000482,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000483,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000484,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000485,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000486,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000487,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000488,
+   "agent_places": [
+    3,
+    1
+   ]
+  },
+  {
+   "seed": 5000489,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000490,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000491,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000492,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000493,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000494,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000495,
+   "agent_places": [
+    1,
+    2
+   ]
+  },
+  {
+   "seed": 5000496,
+   "agent_places": [
+    3,
+    2
+   ]
+  },
+  {
+   "seed": 5000497,
+   "agent_places": [
+    2,
+    1
+   ]
+  },
+  {
+   "seed": 5000498,
+   "agent_places": [
+    1,
+    3
+   ]
+  },
+  {
+   "seed": 5000499,
+   "agent_places": [
+    3,
+    1
+   ]
+  }
+ ]
+}

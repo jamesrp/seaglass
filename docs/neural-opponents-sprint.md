@@ -529,7 +529,42 @@ So the late game is an exploration problem. The learner never pays for it, so it
 - **It did learn to level.** Rated with no curve, the iteration-250 network is on Tier 3.1, 3.9 and 5.7 on turns 7, 10 and 13, against 2.6, 2.9 and 4.0 for the starting network, and on Tier 6 on turn 15. Its boards are weaker: 929 median stats on turn 13 and 0.3% against human boards, for a place of 2.05 ± 0.07.
 - **Run A was stopped at iteration 278.** Its files are kept in `runs/school/a`.
 
-**Run B** (`runs/school/b`) starts from iteration 1870 again with `--lr 5e-5 --anneal-lr` over 1,800 iterations and everything else as in run A. Annealed to zero, its last network is cooled like the starting one, so the two compare directly.
+**Run B closed the cost of the curve and did not find engines.** `runs/school/b` started from iteration 1870 again with `--lr 5e-5 --anneal-lr` over 1,800 iterations and everything else as in run A. It ran all 1,800 iterations (115,200 lobbies) in 7.6 hours. Its checks on the curve, averaged over 300 iterations (12 checks of 500 lobbies):
+
+| Iterations | Place | Win rate against human boards, turn 13 | Same, human stats at 10% | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Dragons among the last boards | Policy entropy |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 to 300 | 1.97 | 1.2% | 19.7% | 1,238 | 2.2 | 25% | 0.52 |
+| 301 to 600 | 2.03 | 1.2% | 19.1% | 1,181 | 2.1 | 27% | 0.53 |
+| 601 to 900 | 2.02 | 1.3% | 19.6% | 1,206 | 2.1 | 27% | 0.54 |
+| 901 to 1,200 | 1.90 | 1.4% | 20.3% | 1,227 | 2.3 | 30% | 0.53 |
+| 1,201 to 1,500 | 1.84 | 1.5% | 21.6% | 1,304 | 2.3 | 29% | 0.54 |
+| 1,501 to 1,800 | 1.79 | 1.6% | 22.4% | 1,355 | 2.4 | 30% | 0.55 |
+
+Its last network on the fast ladder, 500 lobbies each. The school plays with a cap of 80 actions a turn, so the starting network was rated again with that cap:
+
+| Network | Curve | Place | Tier on turns 7 / 10 / 13 | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | standard | 1.90 ± 0.07 | 4.0 / 5.0 / 6.0 | 1,314 | 2.6 | 1.2% | 19.9% |
+| Iteration 1870, another seed | standard | 1.98 ± 0.08 | 4.0 / 5.0 / 6.0 | 1,276 | 2.6 | 1.2% | 19.9% |
+| Run B, iteration 1800 | standard | 1.77 ± 0.05 | 4.0 / 5.0 / 6.0 | 1,397 | 2.5 | 1.8% | 23.1% |
+| Run B, iteration 1800, another seed | standard | 1.78 ± 0.06 | 4.0 / 5.0 / 6.0 | 1,294 | 2.5 | 1.6% | 22.2% |
+| Iteration 1870 | none | 1.74 ± 0.05 | 2.6 / 2.9 / 4.0 | 1,464 | 1.4 | 1.7% | 21.7% |
+| Run B, iteration 1800 | none | 1.78 ± 0.05 | 2.6 / 3.0 / 4.3 | 1,238 | 1.0 | 1.1% | 18.6% |
+
+Head to head against iteration 1870 with no curve, four seats each, 400 lobbies (`ladder versus`):
+
+| Four seats of | Their place | Iteration 1870's place | Gap to 4.5 (positive is worse) |
+| :--- | :--- | :--- | :--- |
+| Iteration 1870 on the curve | 5.01 | 3.99 | +0.51 ± 0.08 |
+| Run B's last network on the curve | 4.57 | 4.43 | +0.07 ± 0.09 |
+| Run B's last network with no curve | 4.63 | 4.37 | +0.13 ± 0.09 |
+
+- **The curve no longer costs places.** Put on the curve with no training, the starting network lost half a place to itself. After the school it is level. On the fast ladder it places 1.77 on the curve, where the starting network places 1.90 to 1.98 on the curve and 1.74 off it.
+- **Against human boards it gained half a point.** It wins 1.6% to 1.8% on turn 13, from 1.2% on the curve, and 22% to 23% against human boards at a tenth of their stats, from 19.9%. That is where the starting network stands off the curve (1.7% and 21.7%).
+- **The 6b gate is not met.** The gate asked for boards that grow several-fold and for Tier 5 and 6 engines. The median board on turn 13 holds 1,294 to 1,397 stats against 1,276 to 1,314 before, and 2.5 Tier 5 and 6 minions against 2.6.
+- **The gains came late and had not stopped.** The first 900 iterations, with the learning rate between 5e-5 and 2.5e-5, are level with the start. Each 300 iterations after that gained on every measure, and the last check is the best one.
+- **It does not level by itself.** With no curve it is on Tier 2.6, 3.0 and 4.3 on turns 7, 10 and 13, as the starting network is, and its boards are weaker than the starting network's. It never chose an upgrade in training, so this is step 6c's question.
+- **The trainer's last check and the cloud rating agree to the digit** (1.77, 1.8%, 23.1%, 1,397), so a Mac checkpoint can be rated in either place.
 
 **What the networks buy on Tier 6** (`rl/scripts/review/shoptake.py`, 120 lobbies of eight seats on the standard curve, shops seen with 3 or more Gold):
 
@@ -538,10 +573,12 @@ So the late game is an exploration problem. The learner never pays for it, so it
 | Iteration 1870 | 1.9% | 3.3% | 8 | 67% to 75% |
 | Run A, iteration 250 | 0.6% | 2.2% | 4 | 36% to 42% |
 | Run B, iteration 230 | 2.2% | 4.2% | 11 | 45% to 49% |
+| Run B, iteration 1800 | 3.3% | 6.1% | 10 | 51% to 66% |
 
 - **On Tier 6 the starting network passes on almost every high-tier minion.** It buys 8 of the 85 Tier 5 and 6 cards it is shown with any regularity (`Falling Sky Golem`, `Hopebringer`, `Charging Czarina`, `Crimson Vindicator`, `Resourceful Robot` and three more) and never buys most of the rest. It still buys two of every three Volumizers.
 - **Run B is moving toward Dragons.** By iteration 230, `Crimson Vindicator` went from 36% to 59%, `Bronze Timewalker` from 1% to 16%, `Persistent Poet` from 4% to 18%, `Firescale Hoarder` from 0% to 12%, `Felfire Conjurer` from 10% to 19% and `Heroic Broodmother` from 3% to 11%. The Volumizers fell from about 70% to about 47%. Its checks on the curve are level with the starting line so far (1.1% to 1.4% against human boards), so the new buys have not yet made stronger boards.
 - **Run A unlearned.** Its take rates fell across the board, which fits the re-heating.
+- **Run B's last network buys more of the same cards.** `Crimson Vindicator` ends at 96%, `Hopebringer` at 88% (from 62%), `Falling Sky Golem` at 86% (from 71%), `Charging Czarina` at 74% (from 57%), `Eternal Summoner` at 30% (from 14%) and `Heroic Broodmother` at 26%. The cards it tried at iteration 230 are back under 6%: `Bronze Timewalker` 1%, `Persistent Poet` 5%, `Firescale Hoarder` 1%. It never buys 51 of the 85 Tier 5 and 6 cards, the same count as the starting network (41 at iteration 230).
 
 The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
 
@@ -552,6 +589,7 @@ The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
 | Iteration 1870, no curve | 2,700 | 17.5 | 562 / 849 / 1,165 / 1,652 | 5.02 / 4.36 / 3.74 / 2.58 | -0.47 | -0.14 |
 | Iteration 1870 on the curve | 2,420 | 15.9 | 452 / 667 / 899 / 1,278 | 4.53 / 4.08 / 3.40 / 2.40 | -0.45 | -0.16 |
 | Run B, iteration 790, on the curve | 2,406 | 15.6 | 407 / 640 / 903 / 1,337 | 4.53 / 4.00 / 3.43 / 2.37 | -0.45 | -0.20 |
+| Run B, iteration 1800, on the curve | 2,430 | 15.8 | 464 / 719 / 978 / 1,394 | 4.52 / 4.01 / 3.37 / 2.52 | -0.43 | -0.12 |
 
 | Tier 5 and 6 minions on the board, turn 11 | 0 | 1 | 2 | 3 | 4 or more |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -562,10 +600,17 @@ The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
 - **The size of the board on turn 11 decides the place far more than what is on it.** The strongest quarter of boards finishes two places ahead of the weakest. Four high-tier minions against none is worth about one place, and those boards are also half again as large, so part of that place is stats.
 - **The curve makes the boards smaller and the lobby shorter.** The Gold for the upgrades comes out of the board: every quarter holds about 20% fewer stats on turn 11, 780 seats are dead by then against 500, and the lobby ends on turn 15.9 against 17.5.
 - **A school lobby ends about five turns after the curve reaches Tier 6.** In those turns the larger board wins now, and a board that would scale has no time to. The curve puts the network in front of the Tier 6 shop, but the reward in a lobby of tempo boards still goes to tempo.
-- **High-tier minions pay a little more in run B.** Their rank correlation with place went from -0.16 to -0.20, and a board with three of them gained 0.3 places on the starting network's.
+- **High-tier minions paid a little more in the middle of run B, and not at its end.** Their rank correlation with place went from -0.16 to -0.20 at iteration 790 and is -0.12 for the last network. Its boards on turn 11 are 3% to 9% larger than the starting network's in every quarter.
 - **Dragons place best with the smallest boards.** Dragon boards finish at 3.34 to 3.40 on a median of about 590 stats, and Mech boards at 3.50 to 3.53 on 900 to 970. Total stats under-read what Dragons do in combat. Run B plays more of them: 693 Dragon seats alive on turn 11 against 507.
 
-The counts are in `whatwins_*.json` in the same folder. The no-curve row was played with the plain cap of 30 actions a turn, and the two curve rows with the school's 80.
+The counts are in `whatwins_*.json` in the same folder. The no-curve row was played with the plain cap of 30 actions a turn, and the curve rows with the school's 80.
+
+**What Stage 6b says.** Leveling was not what kept the network from the late game. On Tier 6 it plays the game it already knew, a little better, with ten high-tier cards.
+
+- **The school taught play from Tier 6, and nothing wider.** The cost of the curve is gone, the take rates on Tier 6 nearly doubled, and the cards behind that are the ones the starting network already bought.
+- **A lobby of these boards pays for the board that is larger now.** It ends about five turns after the curve reaches Tier 6. A card that pays later, or only next to two others, is worth less than a Volumizer in the turns that are left, so the cards tried in the warm first half of run B were dropped again.
+- **The plan's next step for this case was the auxiliary head and a higher cap.** The measurements point at something narrower: 51 of 85 high-tier cards are never bought, and five of the ten minion types together make up under 1% of its last boards. The network has no games in which those cards could pay.
+- **Three ways forward are open, and the choice is James's:** a second scaffold that makes each school seat play one minion type, so that it has to make that type's cards work; learning from human games, which needs Season 14 logs saved before 2026-12-01 and puts human data on the training path; or step 6c with the network as it is.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
