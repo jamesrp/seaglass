@@ -508,7 +508,8 @@ So the late game is an exploration problem. The learner never pays for it, so it
 
 **6b is built.** `train_lobby --force-curve standard` passes its tests (`rl/tests/test_endgame_school.py`), and six iterations on CPU from iteration 1870 ran clean, with every model seat on Tier 4 on turn 7 and Tier 6 on turn 11.
 
-- **The first run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, and a check every 25 iterations. An iteration takes about 14 seconds there, so the run is set to 2,400 iterations or 10 hours, whichever comes first.
+- **The first run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, and a check every 25 iterations. An iteration takes about 14 seconds there, so the run is set to 2,400 iterations or 10 hours, whichever comes first. The capacity test fine-tuned at 2e-5 annealed to zero and held its style. This run has to change its style, which is why it started with a fresh optimizer at 1e-4.
+- **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
 - **Its first check found a bug.** With `--replays` the check keeps replays, and the forced upgrade passed a replay note the engine does not take. The run stopped at iteration 25. The forced upgrade and the automatic reorder now carry the engine's `forced` note (commit `332387d`), and the run continued from its saved iteration 25 with `--resume`.
 - **Its second check found a combat that never ends.** A `Heroic Broodmother` with the `Invulnerability` Dark Gift takes no damage while attacking and gets its Divine Shield back on every attack. Against a human board with thousands of Health it can neither die nor win, and the engine had no limit on combat length, so the fight ran until the worker ran out of memory and the check waited for it forever. The engine now calls a combat a draw after 1,000 attack turns ([`engine/docs/combat.md`](../engine/docs/combat.md) §5.2). The same fight can come up between two late boards in a lobby, so this guards the training games too. The run continued from its saved iteration 50.
 - **A worker that dies now stops the run.** `multiprocessing.Pool` waits forever for the task of a worker that died, which is how the endless combat became a silent hang. `Player.play` now raises instead.
@@ -543,8 +544,28 @@ So the late game is an exploration problem. The learner never pays for it, so it
 - **Run A unlearned.** Its take rates fell across the board, which fits the re-heating.
 
 The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
-- **The learning rate is higher than the capacity test's.** That run fine-tuned at 2e-5 annealed to zero and held its style. This one has to change its style, so it starts with a fresh optimizer at 1e-4.
-- **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
+
+**What wins a place in a school lobby** (`rl/scripts/review/whatwins.py`, 400 lobbies of eight seats of one network, every seat still alive on turn 11, by quarter of board stats from weakest to strongest):
+
+| Network | Seats alive on turn 11, of 3,200 | Lobby length, turns | Median board stats by quarter | Final place by quarter | Rank correlation with place: board stats | Same: Tier 5 and 6 minions |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870, no curve | 2,700 | 17.5 | 562 / 849 / 1,165 / 1,652 | 5.02 / 4.36 / 3.74 / 2.58 | -0.47 | -0.14 |
+| Iteration 1870 on the curve | 2,420 | 15.9 | 452 / 667 / 899 / 1,278 | 4.53 / 4.08 / 3.40 / 2.40 | -0.45 | -0.16 |
+| Run B, iteration 790, on the curve | 2,406 | 15.6 | 407 / 640 / 903 / 1,337 | 4.53 / 4.00 / 3.43 / 2.37 | -0.45 | -0.20 |
+
+| Tier 5 and 6 minions on the board, turn 11 | 0 | 1 | 2 | 3 | 4 or more |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Final place, iteration 1870 on the curve | 4.11 | 3.83 | 3.63 | 3.47 | 3.04 |
+| Final place, run B at iteration 790 | 4.08 | 3.79 | 3.36 | 3.16 | 2.96 |
+| Median board stats, run B at iteration 790 | 607 | 732 | 822 | 891 | 933 |
+
+- **The size of the board on turn 11 decides the place far more than what is on it.** The strongest quarter of boards finishes two places ahead of the weakest. Four high-tier minions against none is worth about one place, and those boards are also half again as large, so part of that place is stats.
+- **The curve makes the boards smaller and the lobby shorter.** The Gold for the upgrades comes out of the board: every quarter holds about 20% fewer stats on turn 11, 780 seats are dead by then against 500, and the lobby ends on turn 15.9 against 17.5.
+- **A school lobby ends about five turns after the curve reaches Tier 6.** In those turns the larger board wins now, and a board that would scale has no time to. The curve puts the network in front of the Tier 6 shop, but the reward in a lobby of tempo boards still goes to tempo.
+- **High-tier minions pay a little more in run B.** Their rank correlation with place went from -0.16 to -0.20, and a board with three of them gained 0.3 places on the starting network's.
+- **Dragons place best with the smallest boards.** Dragon boards finish at 3.34 to 3.40 on a median of about 590 stats, and Mech boards at 3.50 to 3.53 on 900 to 970. Total stats under-read what Dragons do in combat. Run B plays more of them: 693 Dragon seats alive on turn 11 against 507.
+
+The counts are in `whatwins_*.json` in the same folder. The no-curve row was played with the plain cap of 30 actions a turn, and the two curve rows with the school's 80.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
