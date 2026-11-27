@@ -669,6 +669,28 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **That gap is what the school can teach.** Every model seat of a school lobby is limited alike, so nothing else on the shelf can stand in for the type's cards, and the seat that makes them work wins the lobby.
 - **Run E is run D with the limit** (`runs/school/e` on the Mac mini, started 2026-11-27 at 12:05 PM Pacific: `--school-tribes 1:0.5 --school-buys own --seed 3`, from run B's last network with the pool seeded with it, otherwise as run D). Run D was stopped at iteration 1207 of 1,800 to make room for it. Its snapshots are kept, so it can be resumed as the control.
 
+**Run E at a third of the way: under the limit the weak types' boards grow** (iteration 630 of 1,800; `bytype.py --tribes 1` with and without `--buys own`, the same 400 lobbies, boards on turn 13, against run B's last network, which run E started from):
+
+| The lobby's type | Median board stats under the limit, run B's last network | Same, run E at iteration 630 | Median board stats with no limit, run B's last network | Same, run E at iteration 630 | Win rate against human boards under the limit, run B's last network | Same, run E at iteration 630 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 3,151 | 3,225 | 3,286 | 6.2% | 5.6% |
+| Dragon | 1,485 | 1,421 | 1,732 | 1,607 | 5.3% | 4.4% |
+| Pirate | 1,521 | 1,682 | 2,268 | 1,993 | 1.0% | 2.0% |
+| Demon | 1,464 | 2,221 | 1,533 | 1,910 | 1.0% | 2.8% |
+| Elemental | 1,157 | 1,528 | 1,483 | 1,618 | 0.8% | 1.4% |
+| Aberration | 653 | 956 | 1,281 | 1,395 | 0.5% | 0.5% |
+| Murloc | 668 | 1,004 | 1,266 | 1,274 | 0.4% | 0.5% |
+| Quilboar | 1,218 | 3,317 | 1,162 | 2,110 | 1.1% | 3.6% |
+| Undead | 899 | 1,055 | 1,070 | 1,098 | 0.3% | 0.3% |
+| Beast | 357 | 570 | 856 | 827 | 0.4% | 1.0% |
+| Mean over the types | 1,293 | 1,691 | 1,588 | 1,712 | 1.7% | 2.2% |
+
+- **Under the limit all seven weak types build larger boards, by 17% to 172%.** Quilboar is the first type to work: its median board holds 3,317 stats, as much as a Mech board, from 1,218. Demon boards are half again as large, and Beast, Murloc and Aberration boards about half again from a low start.
+- **Some of it carries over to one-type lobbies with no limit.** There Quilboar boards hold 2,110 stats from 1,162 and Demon boards 1,910 from 1,533. The mean over the types is 8% above run B's last network, and 75% of boards are of the lobby's type, from 70%.
+- **It buys the lobby's minions twice as often** (`shoptake.py --tribes 1`, 150 lobbies, from turn 9 on, the seven weak types). Under the limit it takes 12.8% of the Tier 5 and 6 minions of the lobby's type it is shown, from 5.9%, and 3.2% of the lower ones, from 1.5%. With no limit it takes 6.3% and 1.6%, from 3.7% and 0.8%, and 4.4% of the high-tier Beasts, from 0.5%. With no limit 29 of 78 Tier 5 and 6 cards are never bought, from 43 of 78.
+- **The three strong types gave a little back,** as every run has in its warm first half: Mech and Dragon boards are 4% to 10% smaller under the limit.
+- **The five-type ladder has not moved yet.** The checks stand at place 1.89 and 1.0% to 1.1% against human boards at iteration 600, in the same dip runs B and D had there (2.08 and 1.2%, 2.01 and 0.8%). Runs B and D gained on the ladder only in their last third, so the last network decides.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
