@@ -1,0 +1,28 @@
+topic: The attack limit ends a combat that cannot finish
+scenarios:
+  # Heroic Broodmother with Invulnerability takes no damage while attacking, and its Rally gives it
+  # Divine Shield on every attack. The wall hits it once between its attacks, and the shield takes
+  # that hit. So neither minion can die. Before the limit this combat never returned.
+  - name: an_attacker_that_cannot_die_against_a_wall_it_cannot_break_is_a_draw
+    description: >-
+      After the Broodmother's Start of Combat attack, each side takes 500 attack turns: 1,000 in
+      all. Then the combat is a stall, a draw with both minions alive.
+    seed: 1
+    combat:
+      board_a: ["Heroic Broodmother gift:invulnerability"]
+      board_b: ["1/1000000"]
+    expect:
+      outcome: draw
+      hero_damage: 0
+      events:
+        all_of:
+          - {where: {type: attack_declared, side: a}, count: 501}   # 1 at Start of Combat + 500
+          - {where: {type: attack_declared, side: b}, count: 500}
+
+  # The limit does not touch a long combat that is going to end: 150 attack turns here.
+  - name: a_long_combat_that_ends_is_not_cut_short
+    seed: 1
+    combat:
+      board_a: ["1/150"]
+      board_b: ["2/150"]
+    expect: {outcome: b_win}

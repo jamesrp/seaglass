@@ -115,10 +115,15 @@ Deterministic triggers (positional buffs, board-wide buffs, token summons, Rebor
 ### 5.2 Turn Loop
 
 ```text
+turns = 0
 loop:
     if empty(A) or empty(B):
         break                         # -> outcome (§5.6)
     if can_attack(current):
+        if turns == MAX_ATTACK_TURNS:
+            result = DRAW             # the combat does not end (attack limit)
+            break
+        turns += 1
         perform_attack(current)       # §5.3
         current = other(current)
     else:
@@ -130,6 +135,7 @@ loop:
 
 - A side that has minions but none that can attack (all `attack == 0`) is skipped and emits `TurnSkipped { side: current }`.
 - When neither side can attack, combat ends immediately in a draw (emitting no `TurnSkipped` event).
+- **Attack limit.** After `MAX_ATTACK_TURNS` (1,000) attack turns, counted over both sides, combat ends in a draw like any other stall. Some pairs of boards never finish: `Heroic Broodmother` with the `Invulnerability` Dark Gift takes no damage while attacking and gets its Divine Shield back on every attack, so attacks cannot kill it, and it may never get through minions that have far more Health than it deals or that keep gaining Health. The number is this engine's own choice, set far above what a decided combat needs; the game's own limit is not confirmed. In a Duos combat the count starts again each time a warband steps in (§3.5 of [`duos.md`](duos.md)).
 
 ### 5.3 Performing One Attack Turn (`perform_attack(side)`)
 
@@ -215,7 +221,7 @@ else:
 - Both boards empty $\to$ **Draw**
 - Only A empty $\to$ **B wins**
 - Only B empty $\to$ **A wins**
-- Stall (neither side can attack) $\to$ **Draw**
+- Stall (neither side can attack, or the attack limit of §5.2) $\to$ **Draw**
 
 **Hero damage**: If there is a winner, the loser's hero takes `winner.hero_tier + sum(winner survivors' tavern_tier)`. Draw $\to 0$.
 
