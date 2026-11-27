@@ -32,7 +32,7 @@ flowchart LR
 | `positioning.py` | Board order by search: the environment orders a model's board at the end of each turn (`--auto-position`). |
 | `probe.py` | The per-turn board probe: the win rate of an end-of-turn board against a frozen library of reference boards from the same turn. |
 | `yardstick.py` | The human yardstick: the win rate of an agent's late boards against a fixed set of human winner boards (`data/human_boards/`). |
-| `curriculum.py` | Training scaffolds: the forced leveling curve of "endgame school" (`train_lobby --force-curve`). |
+| `curriculum.py` | Training scaffolds: the forced leveling curve of "endgame school" (`train_lobby --force-curve`) and the lobbies of fewer minion types of "type school" (`--school-tribes`). |
 | `checkpoint.py` | `save` / `load`. A checkpoint stores the model's config and weights, the optimizer state, and the feature spec it was trained on; loading one with another feature spec fails. |
 | `features.py`, `actions.py`, `model.py` | The observation encoding, the 330 flat actions with their legality mask, and the network. |
 | `seaglass.Encoder` (`engine/src/python/encode.rs`) | The observation encoding and the legality mask, ported to Rust bit for bit (about 10x faster per call; a self-play core plays about 1.8x (transformer) to 2x (MLP) as many games per second). `features.py` and `actions.py` stay the reference and own the layout: `features.encoder_spec()` hands Rust the vocabularies, the action table and every offset, and the Rust code holds only the formulas (`tests/test_rust_encoder.py` checks every decision of whole lobbies for exact equality). `play_games` uses it by default for model and recorded-bot seats when the extension has it; `PlayOptions(rust_encoder=False)` switches back to the Python path. Rebuild the extension after changing the layout in `features.py`: a layout whose blocks do not add up is rejected at construction. |
@@ -93,10 +93,28 @@ Self-play alone settled on Tavern Tiers 2 and 3 ([`docs/review-2026-11-27.md`](.
 
 ```bash
 python -m seaglass_rl.train_lobby --run-dir runs/school --init runs/capacity/small/latest.pt \
-    --no-reposition --max-steps-per-turn 80 --lr 1e-4 --p-bot 0.15 --force-curve standard
+    --no-reposition --max-steps-per-turn 80 --lr 5e-5 --anneal-lr --p-bot 0.15 --force-curve standard
 python -m seaglass_rl.ladder rate runs/school/latest.pt                       # on its curve
 python -m seaglass_rl.ladder rate runs/school/latest.pt --force-curve off     # by itself
 python -m seaglass_rl.ladder versus runs/school/latest.pt runs/capacity/small/latest.pt --max-steps-per-turn 30
+```
+
+Fine-tune a trained network at `--lr 5e-5` or lower with `--anneal-lr`. A constant 1e-4 re-heats the policy and undoes its earlier cooling within 100 iterations ([`docs/neural-opponents-sprint.md`](../docs/neural-opponents-sprint.md), Stage 6 Progress).
+
+### Type school (`--school-tribes`, `curriculum.py`)
+
+On the curve the network reached Tier 6 and went on buying the ten high-tier cards it already knew, in three of the ten minion types. A lobby of five types always offers it those. In a lobby of one type the shop holds that type's minions and the typeless ones, so every seat has to make that type work, and the seat that does wins the lobby.
+
+`--school-tribes 1:0.5` plays half the training lobbies with one minion type; `1:0.4,2:0.2` plays 40% with one and 20% with two. The rest keep `--tribes`.
+
+- **It changes which lobbies are played, and no decision inside them.** The lobby's types are already an input of the network (`LobbyContext.tribes`), so it can tell a one-type lobby from a full one.
+- **The evaluation keeps `--tribes`,** so a type school's checks compare with every other run's.
+- **`scripts/review/bytype.py`** measures the result: the boards a network builds in lobbies of one type, type by type.
+
+```bash
+python -m seaglass_rl.train_lobby --run-dir runs/types --init runs/school/b/latest.pt \
+    --no-reposition --max-steps-per-turn 80 --lr 5e-5 --anneal-lr --p-bot 0.15 --force-curve standard --school-tribes 1:0.5
+PYTHONPATH=. NET=runs/types/latest.pt python scripts/review/bytype.py 9800000 400 bytype.json --tribes 1
 ```
 
 `versus` forces each side as its own checkpoint was trained (`--force-a`, `--force-b` override), and reports both sides' Tier, board stats and human win rate by turn.

@@ -273,3 +273,61 @@ def test_train_lobby_runs_an_endgame_school_iteration(tmp_path) -> None:
     _, ckpt = checkpoint.load(run / "latest.pt")
     assert ckpt["args"]["force_curve"] == "standard" and ckpt["args"]["force_share"] == 1.0
     assert ladder.checkpoint_options(str(run / "latest.pt")).forced_curve == curriculum.CURVES["standard"]
+
+
+# -- The type school ------------------------------------------------------------------------------
+
+
+def test_type_mixes_parse() -> None:
+    assert curriculum.parse_type_mix(None) == () and curriculum.parse_type_mix("off") == ()
+    assert curriculum.parse_type_mix("1:0.5") == ((1, 0.5),)
+    mix = curriculum.parse_type_mix("1:0.4,2:0.2")
+    assert mix == ((1, 0.4), (2, 0.2))
+    for bad in ("1", "0:0.5", "11:0.5", "1:0", "1:0.7,2:0.7", "1:0.2,1:0.2", "x:y"):
+        with pytest.raises(ValueError):
+            curriculum.parse_type_mix(bad)
+    # Each entry takes its share of the draws, and the rest keep the lobby config's own types.
+    assert [curriculum.draw_types(mix, x) for x in (0.0, 0.39, 0.41, 0.59, 0.61, 0.99)] == [1, 1, 2, 2, None, None]
+    assert curriculum.draw_types(((1, 1.0),), 0.999) == 1
+
+
+def test_a_game_can_have_its_own_number_of_minion_types() -> None:
+    config = LobbyConfig(max_turns=3)
+    bots = ["heuristic"] * 8
+    specs = [GameSpec(seed=21, controllers=bots, tribes=1), GameSpec(seed=22, controllers=bots, tribes=2), GameSpec(seed=23, controllers=bots)]
+    seen: dict[int, list[str]] = {}
+    play_games(config, specs, {}, record=(), on_turn_end=lambda g, p, game, obs: seen.setdefault(g, list(game.tribes)))
+    assert [len(seen[g]) for g in range(3)] == [1, 2, 5]
+    # The lobby is the one its seed makes with that many types, and the rest of the config is kept.
+    one = LobbyConfig(max_turns=3, tribes=1).make(21)
+    assert seen[0] == list(one.tribes)
+
+
+def test_make_specs_draws_lobby_types_by_share() -> None:
+    import random
+
+    config = LobbyConfig()
+    plain = train_lobby.make_specs(config, 400, 4, [], ["heuristic"], 1.0, random.Random(0), seed=5)
+    assert all(s.tribes is None for s in plain)
+    mixed = train_lobby.make_specs(config, 400, 4, [], ["heuristic"], 1.0, random.Random(0), seed=5, type_mix=((1, 0.5), (2, 0.25)))
+    # The seating does not depend on the mix.
+    assert [s.controllers for s in mixed] == [s.controllers for s in plain]
+    counts = {n: sum(s.tribes == n for s in mixed) for n in (1, 2, None)}
+    assert 160 < counts[1] < 240 and 70 < counts[2] < 130 and 70 < counts[None] < 130
+
+
+def test_train_lobby_runs_a_type_school_iteration(tmp_path) -> None:
+    with pytest.raises(SystemExit):
+        train_lobby.main(["--run-dir", str(tmp_path / "bad"), "--iterations", "1", "--workers", "0", "--device", "cpu", "--school-tribes", "6"])
+    run = tmp_path / "types"
+    train_lobby.main(
+        [
+            "--run-dir", str(run), "--iterations", "1", "--games", "2", "--workers", "0", "--device", "cpu",
+            "--threads", "1", "--minibatch", "256", "--epochs", "1", "--no-reposition", "--max-steps-per-turn", "12",
+            "--school-tribes", "1:1", "--eval-games", "2", "--no-eval-probe", "--no-eval-yardstick",
+        ]
+    )  # fmt: skip
+    (row,) = [json.loads(line) for line in (run / "log.jsonl").read_text().splitlines()]
+    assert row["school_games"] == 2 and "eval" in row
+    _, ckpt = checkpoint.load(run / "latest.pt")
+    assert ckpt["args"]["school_tribes"] == "1:1" and ckpt["args"]["tribes"] == 5

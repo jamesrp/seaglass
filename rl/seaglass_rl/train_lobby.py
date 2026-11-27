@@ -27,6 +27,9 @@ Each iteration:
 `--force-curve` is the "endgame school" scaffold (`curriculum.py`): the environment levels every
 model seat on a fixed curve, so the learner plays the late game it otherwise never visits.
 `--force-share` below 1 leaves some seats to level by themselves, to take the scaffold away again.
+`--school-tribes` is the "type school" scaffold: a share of the training lobbies has fewer minion
+types (`1:0.5`: half of them have one), so the learner has to make every type's cards work. The
+evaluation keeps `--tribes`.
 
 The run directory holds `args.json`, `log.jsonl` (one line per iteration), `latest.pt`,
 `snapshots/iter_XXXXX.pt` and `evals/iter_XXXXX.json` (the full ladder results).
@@ -46,7 +49,7 @@ import torch
 
 from . import checkpoint
 from .behavior import behavior_stats, format_behavior
-from .curriculum import CURVES, parse_curve
+from .curriculum import CURVES, TypeMix, draw_types, parse_curve, parse_type_mix
 from .device import add_device_arg, cpu_state_dict, default_threads, default_workers, empty_cache, pick_device
 from . import ladder
 from .evaluate import evaluate, format_result
@@ -138,6 +141,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=1.0,
         help="with --force-curve: the chance that a model seat of a training game is on the curve (default 1: "
         "every seat). Below 1, the evaluation plays with no curve",
+    )
+    p.add_argument(
+        "--school-tribes",
+        default=None,
+        metavar="TYPES:SHARE,...",
+        help="type school (curriculum.py): play this share of the training lobbies with this many minion types in "
+        "place of --tribes, for example 1:0.5 or 1:0.4,2:0.2. The evaluation keeps --tribes",
     )
     p.add_argument("--snapshot-every", type=int, default=10)
     p.add_argument("--pool-recent", type=int, default=4, help="the latest snapshots that are opponents every iteration")
@@ -279,6 +289,14 @@ def lobby_config(args: argparse.Namespace) -> LobbyConfig:
     )
 
 
+def type_mix(args: argparse.Namespace) -> TypeMix:
+    """`--school-tribes` as a mix (`curriculum.parse_type_mix`)."""
+    try:
+        return parse_type_mix(getattr(args, "school_tribes", None))
+    except ValueError as e:
+        raise SystemExit(f"--school-tribes: {e}")
+
+
 def forced_curve(args: argparse.Namespace, training: bool) -> tuple[tuple[int, int], ...] | None:
     """`--force-curve` as steps. In an evaluation (`training` False) the curve applies only when every
     training seat is on it (`--force-share` 1): a learner that has to level by itself in training is
@@ -334,15 +352,18 @@ def make_specs(
     rng: random.Random,
     seed: int,
     force_share: float = 1.0,
+    type_mix: TypeMix = (),
 ) -> list[GameSpec]:
     """The iteration's games: the learner in `learner_units` random units, the league in the rest.
     Each opponent seat is a rule bot from `bots` (uniformly) with chance `p_bot`, or a snapshot from
     `opponents`; with no snapshot yet it is always a bot. With no snapshot and no bots (`p_bot` 0
     or `bots` empty), the learner fills every unit. With `force_share` below 1, each unit is left
-    off the forced curve (`GameSpec.unforced_units`) with chance `1 - force_share`."""
+    off the forced curve (`GameSpec.unforced_units`) with chance `1 - force_share`. With a
+    `type_mix`, each game's lobby has the minion types the mix draws for it (`GameSpec.tribes`)."""
     specs = []
-    # Its own stream, so the seating is the same with and without a curve.
+    # Their own streams, so the seating is the same with and without a curve or a mix.
     force_rng = random.Random(seed * 31 + 7)
+    type_rng = random.Random(seed * 37 + 11)
     for g in range(games):
         controllers = []
         everyone = not opponents and (p_bot <= 0 or not bots)
@@ -355,7 +376,8 @@ def make_specs(
             else:
                 controllers.append(rng.choice(opponents))
         unforced = () if force_share >= 1.0 else tuple(u for u in range(config.units) if force_rng.random() >= force_share)
-        specs.append(GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced))
+        tribes = draw_types(type_mix, type_rng.random()) if type_mix else None
+        specs.append(GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced, tribes=tribes))
     return specs
 
 
@@ -395,6 +417,7 @@ def main(argv: list[str] | None = None) -> None:
     if not 0.0 <= args.force_share <= 1.0:
         raise SystemExit("--force-share is a chance: 0..1")
     forced_curve(args, training=True)  # a bad --force-curve stops here, before the workers start
+    mix = type_mix(args)  # and a bad --school-tribes
 
     start = 0
     if args.resume:
@@ -461,6 +484,7 @@ def main(argv: list[str] | None = None) -> None:
                 rng,
                 seed=args.seed * 10_000_019 + it * 1000,
                 force_share=args.force_share if args.force_curve is not None else 1.0,
+                type_mix=mix,
             )
             source = (dict(model.config), cpu_state_dict(model))
             sources: dict[str, Any] = {LEARNER: source}
@@ -493,6 +517,8 @@ def main(argv: list[str] | None = None) -> None:
                 "update_s": round(time.time() - t0 - t_play, 1),
                 **{k: round(v, 4) for k, v in metrics.items()},
             }
+            if mix:
+                row["school_games"] = sum(spec.tribes is not None for spec in specs)
             if it % args.snapshot_every == 0:
                 snap = run / "snapshots" / f"iter_{it:05d}.pt"
                 checkpoint.save(snap, model, iteration=it, args=vars(args))

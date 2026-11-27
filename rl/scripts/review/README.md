@@ -22,6 +22,7 @@ python scripts/review/metaprobe.py selfplain --scale 0.1
 python scripts/review/curve_exp.py standard 9400000 200 $REVIEW_DIR/games
 python scripts/review/shoptake.py 9500000 120 $REVIEW_DIR/shoptake.json --curve standard --cap 80
 python scripts/review/whatwins.py 9700000 400 $REVIEW_DIR/whatwins.json --curve standard --cap 80 --turn 11
+python scripts/review/bytype.py 9800000 400 $REVIEW_DIR/bytype.json --tribes 1 --curve standard --cap 80
 ```
 
 `watch.py` writes one `MODE_SEED.json` (the per-turn log of all eight seats) and one `MODE_SEED.replay.pb` (the engine replay) per lobby. It runs one lobby at a time in one process, so start several with different seed ranges to use more cores.
@@ -37,6 +38,7 @@ python scripts/review/whatwins.py 9700000 400 $REVIEW_DIR/whatwins.json --curve 
 | `temp_exp.py` | The greedy-play what-if: four seats at a given temperature against four sampling seats. |
 | `shoptake.py` | What a net buys from the shops it is shown: minions offered and bought, by the seat's Tavern Tier and the minion's Tier, and by card. `--curve standard` plays it as endgame school does. |
 | `whatwins.py` | What wins a place among the net's own seats: the average final place by the Tier 5 and 6 minions, the total stats and the minion type of a seat's board on one turn. |
+| `bytype.py` | What the net builds in lobbies of one minion type (`--tribes 1`), type by type: board stats on turns 11 and 13, Tier 5 and 6 minions, the win rate against human boards, and how many boards are of the lobby's type. |
 | `export.py` | Collects the numbers behind the review's two charts into `chartdata.json`. |
 | `cardtext.py` | Pulls each card's rules text from the engine's doc comments. |
 

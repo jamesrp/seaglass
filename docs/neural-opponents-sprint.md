@@ -612,6 +612,27 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **The plan's next step for this case was the auxiliary head and a higher cap.** The measurements point at something narrower: 51 of 85 high-tier cards are never bought, and five of the ten minion types together make up under 1% of its last boards. The network has no games in which those cards could pay.
 - **Three ways forward are open, and the choice is James's:** a second scaffold that makes each school seat play one minion type, so that it has to make that type's cards work; learning from human games, which needs Season 14 logs saved before 2026-12-01 and puts human data on the training path; or step 6c with the network as it is.
 
+**In a lobby of one minion type the network is strong in three types and lost in the rest** (`rl/scripts/review/bytype.py`, 400 lobbies of eight seats on the curve, each lobby's shop holding one type and the typeless minions; boards on turn 13):
+
+| The lobby's type | Median board stats, iteration 1870 | Same, run B's last network | Win rate against human boards, iteration 1870 | Same, run B's last network | Boards of the lobby's type, run B's last network |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 2,859 | 3,225 | 4.5% | 6.3% | 100% |
+| Dragon | 1,274 | 1,732 | 4.3% | 5.3% | 100% |
+| Pirate | 1,661 | 2,268 | 1.7% | 3.6% | 91% |
+| Demon | 1,472 | 1,533 | 1.2% | 1.4% | 75% |
+| Elemental | 1,215 | 1,483 | 0.6% | 1.2% | 55% |
+| Aberration | 1,207 | 1,281 | 0.2% | 0.6% | 52% |
+| Murloc | 1,030 | 1,266 | 0.5% | 0.9% | 53% |
+| Quilboar | 1,224 | 1,162 | 0.6% | 0.9% | 48% |
+| Undead | 1,060 | 1,070 | 0.2% | 0.6% | 78% |
+| Beast | 728 | 856 | 0.4% | 0.4% | 47% |
+| Mean over the types | 1,373 | 1,588 | 1.4% | 2.1% | 70% |
+
+- **The school's gain shows more clearly here.** With only Mechs in the shop, run B's last network wins 6.3% against human boards on turn 13, and 49% against them at a tenth of their stats.
+- **In six types its boards are weak.** With only Beasts in the shop its median board holds 856 stats on turn 13, a quarter of its Mech board, and half its boards there are a typeless pile. The published human Beast board holds about 52,000.
+- **A one-type lobby is a place where those cards can pay.** Every seat is equally lost in a Beast lobby, so the first seat to make Beasts work wins it. That is the incentive the five-type lobby does not give, because Mechs, Dragons or Pirates are almost always on offer there.
+- **`train_lobby --school-tribes 1:0.5` plays half the training lobbies with one type** (the type school, `curriculum.py`). The check stays on the five-type ladder. It is built and tested and has not been run.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint

@@ -44,7 +44,7 @@ import multiprocessing as mp
 import os
 import random
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
@@ -275,6 +275,8 @@ class GameSpec:
     probe_units: tuple[int, ...] = ()
     # The units left off the forced curve (`PlayOptions.forced_curve`).
     unforced_units: tuple[int, ...] = ()
+    # The minion types in this game's lobby, in place of `LobbyConfig.tribes` (None: the config's).
+    tribes: int | None = None
 
 
 @dataclass
@@ -507,7 +509,9 @@ def play_games(
     upgrade = action_from_index(UPGRADE_INDEX)
     stats: list[list[list[TurnStat]]] = [[[] for _ in range(config.players)] for _ in specs]
     games = [
-        config.make(spec.seed, meta={"source": "seaglass_rl.play", "controllers": ",".join(spec.controllers)})
+        (config if spec.tribes is None else replace(config, tribes=spec.tribes)).make(
+            spec.seed, meta={"source": "seaglass_rl.play", "controllers": ",".join(spec.controllers)}
+        )
         for spec in specs
     ]
     seats: list[list[_Seat]] = []

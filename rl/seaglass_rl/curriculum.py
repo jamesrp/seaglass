@@ -1,4 +1,5 @@
-"""Training scaffolds: the forced leveling curve ("endgame school").
+"""Training scaffolds: the forced leveling curve ("endgame school") and lobbies of fewer minion
+types ("type school").
 
 Self-play alone settled on Tavern Tiers 2 and 3 (`docs/review-2026-11-27.md`): leveling costs tempo
 now, its payoff is several turns and several specific cards away, and nobody in the pool shows the
@@ -14,6 +15,15 @@ This is a human-written play rule, so it is scaffolding in the same sense as the
 start: `train_lobby --pure` refuses it, and the stage that uses it ends by removing it
 (`--force-share` below 1, then no curve). A network counts as leveling only when it does so with no
 curve.
+
+The type school is the second scaffold. On the curve the learner reached Tier 6 and went on buying
+the ten high-tier cards it knew, in three of the ten minion types (`docs/neural-opponents-sprint.md`,
+Stage 6 Progress). A lobby of five types always offers it those. A lobby of one type does not: its
+shop holds that type's minions and the typeless ones, so every seat has to make that type work, and
+the seat that does wins the lobby. A mix is a list of `(minion types, share)`: that share of the
+training lobbies is played with that many types (`GameSpec.tribes`), the rest as the lobby config
+says. It changes which lobbies are played and no decision inside them, and the evaluation is not
+changed by it.
 """
 
 from __future__ import annotations
@@ -48,6 +58,35 @@ def parse_curve(text: str | None) -> Curve | None:
     if not steps or any(turn < 1 or not 2 <= tier <= 6 for turn, tier in steps):
         raise ValueError(f"not a curve: {text!r} (turns start at 1, Tavern Tiers are 2..6)")
     return steps
+
+
+TypeMix = tuple[tuple[int, float], ...]
+
+
+def parse_type_mix(text: str | None) -> TypeMix:
+    """A type school mix from `"types:share,types:share,..."`, for example `"1:0.5"` (half the
+    lobbies have one minion type) or `"1:0.4,2:0.2"`. None, "" and "off" are no mix."""
+    if text is None or text in ("", "off", "none"):
+        return ()
+    try:
+        mix = tuple((int(a), float(b)) for a, b in (part.split(":") for part in text.split(",")))
+    except ValueError:
+        raise ValueError(f"not a type mix: {text!r} (types:share,types:share,..., for example 1:0.5)")
+    if any(not 1 <= n <= 10 or not 0.0 < share <= 1.0 for n, share in mix) or sum(share for _, share in mix) > 1.0 + 1e-9:
+        raise ValueError(f"not a type mix: {text!r} (1 to 10 minion types, and shares above 0 that add up to 1 at most)")
+    if len({n for n, _ in mix}) != len(mix):
+        raise ValueError(f"not a type mix: {text!r} (a number of minion types is listed twice)")
+    return mix
+
+
+def draw_types(mix: TypeMix, x: float) -> int | None:
+    """The minion types of a lobby whose draw is `x` (uniform in 0..1): the mix's entry whose share
+    `x` falls in, or None (the lobby config's own) past the last one."""
+    for n, share in mix:
+        if x < share:
+            return n
+        x -= share
+    return None
 
 
 def target_tier(curve: Curve, turn: int) -> int:
