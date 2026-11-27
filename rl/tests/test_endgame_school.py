@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 
+import numpy as np
 import pytest
 import seaglass
 
@@ -331,3 +332,84 @@ def test_train_lobby_runs_a_type_school_iteration(tmp_path) -> None:
     assert row["school_games"] == 2 and "eval" in row
     _, ckpt = checkpoint.load(run / "latest.pt")
     assert ckpt["args"]["school_tribes"] == "1:1" and ckpt["args"]["tribes"] == 5
+
+
+def _buys(monkeypatch, model, options: PlayOptions, specs: list[GameSpec], config: LobbyConfig | None = None) -> list[tuple]:
+    """Play `specs` and list every Buy taken: (game's types, controller, is a spell, the card's types)."""
+    from seaglass_rl import play
+
+    seen: list[tuple] = []
+    apply = play._apply
+
+    def spy(game, p, st, idx, note, kind=None):
+        if idx in play.BUY_INDICES and game.phase == "turn":
+            u = game.observe(p).shop[play.BUY_INDICES.index(idx)]
+            seen.append((tuple(game.tribes), st.controller, u.is_spell, "all" if u.tribe == "all" else tuple(u.tribes)))
+        apply(game, p, st, idx, note, kind)
+
+    model._np_rng = np.random.default_rng(7)  # the sampling stream, as a worker seeds it: the same play every call
+    with monkeypatch.context() as patch:
+        patch.setattr(play, "_apply", spy)
+        play_games(config or LobbyConfig(max_turns=7), specs, {LEARNER: model}, options, record=(LEARNER,))
+    return seen
+
+
+def _own(buy: tuple) -> bool:
+    lobby, _, spell, types = buy
+    return not spell and (types == "all" or bool(set(lobby).intersection(types)))
+
+
+def test_school_buys_limit_the_model_seats_of_a_school_lobby(monkeypatch) -> None:
+    m, base = _model(), dict(max_steps_per_turn=12, allow_reposition=False)
+    controllers = [LEARNER] * 6 + ["heuristic"] * 2
+    specs = [GameSpec(seed=31, controllers=controllers, tribes=1), GameSpec(seed=32, controllers=controllers, tribes=2)]
+    # With no limit the same seats buy Tavern spells and minions of no type or another type.
+    free = [b for b in _buys(monkeypatch, m, PlayOptions(**base), specs) if b[1] == LEARNER]
+    assert any(b[2] for b in free) and any(not b[2] and not _own(b) for b in free)
+
+    own = _buys(monkeypatch, m, PlayOptions(school_buys="own", **base), specs)
+    model = [b for b in own if b[1] == LEARNER]
+    assert len(model) > 20 and all(_own(b) for b in model)
+    assert {len(b[0]) for b in model} == {1, 2}
+    # A rule bot of the same lobby is not limited.
+    assert any(not _own(b) for b in own if b[1] == "heuristic")
+
+    minions = [b for b in _buys(monkeypatch, m, PlayOptions(school_buys="minions", **base), specs) if b[1] == LEARNER]
+    assert not any(b[2] for b in minions) and any(not _own(b) for b in minions)
+
+
+def test_school_buys_leave_other_games_alone(monkeypatch) -> None:
+    m, base = _model(), dict(max_steps_per_turn=12, allow_reposition=False)
+    specs = [GameSpec(seed=33, controllers=[LEARNER] * 8)]
+    # A game with the config's own number of types is not a school lobby: the limit is inert there,
+    # so it plays action for action as with no limit (also a one-type config, as in a review script).
+    for config in (LobbyConfig(max_turns=6), LobbyConfig(max_turns=6, tribes=1)):
+        plain = _buys(monkeypatch, m, PlayOptions(**base), specs, config)
+        assert _buys(monkeypatch, m, PlayOptions(school_buys="own", **base), specs, config) == plain
+        assert any(not _own(b) for b in plain)
+    with pytest.raises(ValueError):
+        play_games(LobbyConfig(max_turns=2), specs, {LEARNER: m}, PlayOptions(school_buys="spells"))
+
+
+def test_train_lobby_school_buys_options_and_guards(tmp_path) -> None:
+    def parsed(*extra: str):
+        return train_lobby.parse_args(["--run-dir", "x", *extra])
+
+    assert train_lobby.play_options(parsed("--school-tribes", "1:0.5"), aux=True).school_buys is None
+    on = parsed("--school-tribes", "1:0.5", "--school-buys", "own")
+    assert train_lobby.play_options(on, aux=True).school_buys == "own"
+    for extra in (["--school-buys", "own"], ["--pure", "--school-tribes", "1:0.5", "--school-buys", "own"]):
+        with pytest.raises(SystemExit):
+            train_lobby.main(["--run-dir", str(tmp_path / "bad"), "--iterations", "1", "--workers", "0", "--device", "cpu", *extra])
+    run = tmp_path / "buys"
+    train_lobby.main(
+        [
+            "--run-dir", str(run), "--iterations", "1", "--games", "2", "--workers", "0", "--device", "cpu",
+            "--threads", "1", "--minibatch", "256", "--epochs", "1", "--no-reposition", "--max-steps-per-turn", "12",
+            "--school-tribes", "1:1", "--school-buys", "own", "--eval-games", "2", "--no-eval-probe", "--no-eval-yardstick",
+        ]
+    )  # fmt: skip
+    (row,) = [json.loads(line) for line in (run / "log.jsonl").read_text().splitlines()]
+    assert row["school_games"] == 2 and "eval" in row
+    _, ckpt = checkpoint.load(run / "latest.pt")
+    assert ckpt["args"]["school_buys"] == "own"

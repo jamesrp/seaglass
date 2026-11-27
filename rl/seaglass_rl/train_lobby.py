@@ -28,8 +28,9 @@ Each iteration:
 model seat on a fixed curve, so the learner plays the late game it otherwise never visits.
 `--force-share` below 1 leaves some seats to level by themselves, to take the scaffold away again.
 `--school-tribes` is the "type school" scaffold: a share of the training lobbies has fewer minion
-types (`1:0.5`: half of them have one), so the learner has to make every type's cards work. The
-evaluation keeps `--tribes`.
+types (`1:0.5`: half of them have one), so the learner has to make every type's cards work. With
+`--school-buys own` a model seat of such a lobby can buy only minions of the lobby's types. The
+evaluation keeps `--tribes` and has no buy limit.
 
 The run directory holds `args.json`, `log.jsonl` (one line per iteration), `latest.pt`,
 `snapshots/iter_XXXXX.pt` and `evals/iter_XXXXX.json` (the full ladder results).
@@ -54,7 +55,7 @@ from .device import add_device_arg, cpu_state_dict, default_threads, default_wor
 from . import ladder
 from .evaluate import evaluate, format_result
 from .model import BattlegroundsMLP
-from .play import BOTS, LobbyConfig, LEARNER, GameSpec, Player, PlayOptions
+from .play import BOTS, LobbyConfig, LEARNER, SCHOOL_BUYS, GameSpec, Player, PlayOptions
 from .positioning import PositionSpec
 from .probe import ProbeSpec
 from .ppo import build_batch, ppo_update
@@ -148,6 +149,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar="TYPES:SHARE,...",
         help="type school (curriculum.py): play this share of the training lobbies with this many minion types in "
         "place of --tribes, for example 1:0.5 or 1:0.4,2:0.2. The evaluation keeps --tribes",
+    )
+    p.add_argument(
+        "--school-buys",
+        choices=("any", *SCHOOL_BUYS),
+        default="any",
+        help="with --school-tribes: what a model seat of a school lobby can buy. own: only minions of the lobby's "
+        "types (no Tavern spell, no typeless minion); minions: only minions; any (default): no limit",
     )
     p.add_argument("--snapshot-every", type=int, default=10)
     p.add_argument("--pool-recent", type=int, default=4, help="the latest snapshots that are opponents every iteration")
@@ -317,6 +325,8 @@ def play_options(args: argparse.Namespace, deterministic: bool = False, aux: boo
     horizons = aux_horizons(args) if aux else ()
     return PlayOptions(
         forced_curve=forced_curve(args, training=aux),
+        # Inert outside the school lobbies (`GameSpec.tribes`), so also in every evaluation.
+        school_buys=None if getattr(args, "school_buys", "any") == "any" else args.school_buys,
         # Its own reference boards (another seed), so the ladder's probe stays an independent check.
         aux_probe=ProbeSpec(seed=32_000_000) if horizons else None,
         aux_horizons=horizons or (0, 2, 4),
@@ -418,6 +428,11 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit("--force-share is a chance: 0..1")
     forced_curve(args, training=True)  # a bad --force-curve stops here, before the workers start
     mix = type_mix(args)  # and a bad --school-tribes
+    if args.school_buys != "any" and not mix:
+        raise SystemExit("--school-buys limits the buys in school lobbies: it needs --school-tribes")
+    if args.pure and args.school_buys != "any":
+        # The limit is a hand-written rule on what a seat buys.
+        raise SystemExit("--pure trains with no hand-written play rule: no --school-buys")
 
     start = 0
     if args.resume:

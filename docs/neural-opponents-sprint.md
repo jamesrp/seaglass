@@ -610,7 +610,7 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **The school taught play from Tier 6, and nothing wider.** The cost of the curve is gone, the take rates on Tier 6 nearly doubled, and the cards behind that are the ones the starting network already bought.
 - **A lobby of these boards pays for the board that is larger now.** It ends about five turns after the curve reaches Tier 6. A card that pays later, or only next to two others, is worth less than a Volumizer in the turns that are left, so the cards tried in the warm first half of run B were dropped again.
 - **The plan's next step for this case was the auxiliary head and a higher cap.** The measurements point at something narrower: 51 of 85 high-tier cards are never bought, and five of the ten minion types together make up under 1% of its last boards. The network has no games in which those cards could pay.
-- **Three ways forward are open, and the choice is James's:** a second scaffold that makes each school seat play one minion type, so that it has to make that type's cards work; learning from human games, which needs Season 14 logs saved before 2026-12-01 and puts human data on the training path; or step 6c with the network as it is.
+- **Three ways forward are open, and the choice is James's:** a second scaffold that makes each school seat play one minion type, so that it has to make that type's cards work; learning from human games, which needs Season 14 logs saved before 2026-12-01 and puts human data on the training path; or step 6c with the network as it is. James chose the first on 2026-11-27, with no human data.
 
 **In a lobby of one minion type the network is strong in three types and lost in the rest** (`rl/scripts/review/bytype.py`, 400 lobbies of eight seats on the curve, each lobby's shop holding one type and the typeless minions; boards on turn 13):
 
@@ -644,6 +644,27 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **With only Beasts in the shop, run B's last network buys 6 of the 1,135 Tier 5 and 6 Beasts it is shown** and none of 3,429 lower Beasts. It rolls and buys Tavern spells for the board it has: from turn 9 on in Beast lobbies, 32% of its actions are rolls, 12% buy a spell and 1% buy a minion.
 - **Its board is full by turn 8, so a new minion replaces a grown one.** A Tier 6 minion off the shelf holds fewer stats than a Tier 2 minion with four turns of buffs on it. It is worth the slot only as an engine, over turns the lobby does not last.
 - **Run D, the first type school run, is at its halfway mark and tries fewer of these cards, not more.** (`runs/school/d` on the Mac mini, from run B's last network, `--school-tribes 1:0.5`, otherwise as run B.) At iteration 650 its weak-type boards are 10% to 35% larger than run B's were at iteration 790, and it gets them by rolling more and buying less. Its checks on the five-type ladder are down to 0.7% against human boards. Run B gained only in its second half, so the last network decides.
+
+**A one-type shop needs a buy limit to teach the type** (`train_lobby --school-buys own`, `PlayOptions.school_buys`). A model seat of a school lobby can buy only minions of the lobby's types, so no Tavern spell and no typeless minion. The limit masks Buy actions, so every decision is still the policy's own and is trained on as usual. Rule bots, the five-type lobbies and every check are not limited. Run B's last network under the limit, before any training with it (`bytype.py --tribes 1 --buys own`, the same 400 lobbies; `--buys minions` allows every minion and no spell; boards on turn 13):
+
+| The lobby's type | Median board stats, no limit | Same, only minions | Same, only the lobby's type | Boards of the lobby's type, no limit | Same, only the lobby's type |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,225 | 3,275 | 3,512 | 100% | 100% |
+| Dragon | 1,732 | 1,548 | 1,485 | 100% | 100% |
+| Pirate | 2,268 | 1,717 | 1,521 | 91% | 99% |
+| Demon | 1,533 | 1,480 | 1,464 | 75% | 99% |
+| Elemental | 1,483 | 1,323 | 1,157 | 55% | 89% |
+| Aberration | 1,281 | 967 | 653 | 52% | 84% |
+| Murloc | 1,266 | 953 | 668 | 53% | 85% |
+| Quilboar | 1,162 | 1,012 | 1,218 | 48% | 94% |
+| Undead | 1,070 | 889 | 899 | 78% | 98% |
+| Beast | 856 | 585 | 357 | 47% | 88% |
+| Mean over the types | 1,588 | 1,375 | 1,293 | 70% | 94% |
+
+- **Mech boards do not need spells or typeless minions.** They are 9% larger under the limit. Demon and Quilboar boards are level, Dragon boards lose 14% and Pirate boards a third.
+- **In the other types the board falls to what the type's cards are worth in this network's hands.** A Beast board holds 357 stats on turn 13, a tenth of a Mech board, and Aberration and Murloc boards about 650. The typeless pile and the spells were holding those boards up.
+- **Under the limit it buys more of the lobby's minions, and mostly it rolls** (`shoptake.py --tribes 1 --buys own`, 150 lobbies, from turn 9 on). In the seven weak types it buys 5.9% of the Tier 5 and 6 minions of the lobby's type it is shown, against 3.7% with no limit, and 1.5% of the lower ones, against 0.8%. In Beast lobbies it buys 49 of 1,530 high-tier Beasts and none of 4,412 lower ones, 57% of its actions are rolls and 1% buy a minion. 36 of 80 Tier 5 and 6 cards are never bought, against 43 of 78.
+- **That gap is what the school can teach.** Every model seat of a school lobby is limited alike, so nothing else on the shelf can stand in for the type's cards, and the seat that makes them work wins the lobby.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 

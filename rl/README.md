@@ -109,11 +109,13 @@ On the curve the network reached Tier 6 and went on buying the ten high-tier car
 
 - **It changes which lobbies are played, and no decision inside them.** The lobby's types are already an input of the network (`LobbyContext.tribes`), so it can tell a one-type lobby from a full one.
 - **The evaluation keeps `--tribes`,** so a type school's checks compare with every other run's.
-- **`scripts/review/bytype.py`** measures the result: the boards a network builds in lobbies of one type, type by type.
+- **`--school-buys own` adds the buy limit.** A model seat of a school lobby can buy only minions of the lobby's types: no Tavern spell and no typeless minion (`minions` allows every minion). Without it the network rolls past the lobby's minions and buys spells for the board it already has. The limit masks Buy actions, so every decision is still the policy's own. Rule bots, the other lobbies and every evaluation are not limited, and `--pure` refuses it.
+- **`scripts/review/bytype.py`** measures the result: the boards a network builds in lobbies of one type, type by type (`--buys own` plays them under the limit).
 
 ```bash
 python -m seaglass_rl.train_lobby --run-dir runs/types --init runs/school/b/latest.pt \
-    --no-reposition --max-steps-per-turn 80 --lr 5e-5 --anneal-lr --p-bot 0.15 --force-curve standard --school-tribes 1:0.5
+    --no-reposition --max-steps-per-turn 80 --lr 5e-5 --anneal-lr --p-bot 0.15 --force-curve standard \
+    --school-tribes 1:0.5 --school-buys own
 PYTHONPATH=. NET=runs/types/latest.pt python scripts/review/bytype.py 9800000 400 bytype.json --tribes 1
 ```
 

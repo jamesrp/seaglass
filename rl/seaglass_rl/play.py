@@ -56,6 +56,7 @@ from .actions import (
     ACTION_SPACE_SIZE,
     ACTION_TO_INDEX,
     END_TURN_INDEX,
+    MAX_SHOP,
     action_from_index,
     action_mask,
 )
@@ -79,6 +80,10 @@ REPOSITION = ACTION_KIND_IDS == ACTION_KINDS.index("reposition")
 # The Toggle Freeze action: with the positioning step, allowed only there, once a turn.
 FREEZE = ACTION_KIND_IDS == ACTION_KINDS.index("toggle_freeze")
 UPGRADE_INDEX = ACTION_TO_INDEX[("upgrade_tavern", None, None)]
+# The Buy action of each shop position (`PlayOptions.school_buys` limits them).
+BUY_INDICES = [ACTION_TO_INDEX[("buy", s, None)] for s in range(MAX_SHOP)]
+# `PlayOptions.school_buys`: only minions, or only minions of the lobby's types.
+SCHOOL_BUYS = ("minions", "own")
 # A board has a minion type when this many of its minions share it (`board_type`).
 TYPE_MINIONS = 4
 # Minions of this Tavern Tier or higher count as high-tier (`TurnStat.high`).
@@ -95,6 +100,21 @@ def potential(obs: Any, board: float = 1.0, health: float = 0.0) -> float:
     if health:
         value += health * (obs.health + obs.armor) / 40.0
     return value
+
+
+def limit_buys(mask: np.ndarray, seat: "Seat", obs: Any, limit: str) -> None:
+    """Type school's buy limit (`PlayOptions.school_buys`), applied to `mask` in place: with
+    "minions" a Buy of a Tavern spell is masked out, and with "own" also a Buy of a minion that has
+    none of the lobby's minion types (a minion of every type has them all)."""
+    buys = [s for s, i in enumerate(BUY_INDICES) if mask[i]]
+    if not buys or seat.game.phase != "turn":
+        return
+    shop = (obs if obs is not None else seat.observe()).shop
+    lobby = set(seat.game.tribes)
+    for s in buys:
+        u = shop[s]
+        if u.is_spell or (limit == "own" and u.tribe != "all" and not lobby.intersection(u.tribes)):
+            mask[BUY_INDICES[s]] = False
 
 
 def board_type(board: list) -> str:
@@ -255,6 +275,12 @@ class PlayOptions:
     # With `turn_stats`: also score the end-of-turn board of each unit in `GameSpec.probe_units`
     # against a set of human winner boards (`yardstick.py`).
     yardstick: "YardstickSpec | None" = None
+    # Type school's buy limit (`curriculum.py`; a training scaffold), for the model seats (never a
+    # rule bot) of a game with its own number of minion types (`GameSpec.tribes`). "own": such a
+    # seat can buy only minions of one of the lobby's types, so no Tavern spell and no typeless
+    # minion. "minions": only minions. The other Buy actions are masked out, and what a seat gets
+    # any other way (a Discover, a Triple Reward, a Hero Power) is not limited. None: no limit.
+    school_buys: str | None = None
     # The forced leveling curve (`curriculum.py`; a training scaffold): `(turn, Tavern Tier)` steps.
     # On a forced seat, whenever it is the seat's turn to act, its Tier is below the curve's for the
     # turn and the Tavern upgrade is legal, the environment takes the upgrade. It is counted as
@@ -440,6 +466,8 @@ class _Seat:
         # On the forced curve (`PlayOptions.forced_curve`), and still below it this turn.
         self.forced = False
         self.behind = False
+        # The seat's buy limit (`PlayOptions.school_buys`), or None.
+        self.buy_limit: str | None = None
 
 
 def _bot(controller: str, seed: int) -> Any | None:
@@ -478,6 +506,8 @@ def play_games(
     shopping ends, before the combats. It is for in-process use (the probe library builder).
     """
     opts = options or PlayOptions()
+    if opts.school_buys is not None and opts.school_buys not in SCHOOL_BUYS:
+        raise ValueError(f"school_buys is one of {SCHOOL_BUYS}, got {opts.school_buys!r}")
     if (opts.turn_stats or opts.probe is not None or opts.aux_probe is not None) and config.duos:
         raise ValueError("turn stats, the probe and the auxiliary probe targets are Solo-only")
     searching = opts.search is not None and bool(opts.search_controllers)
@@ -537,6 +567,8 @@ def play_games(
                 and (opts.forced_controllers is None or ctrl in opts.forced_controllers)
                 and game.unit_of(p) not in spec.unforced_units
             )
+            if opts.school_buys is not None and spec.tribes is not None and st.bot is None:
+                st.buy_limit = opts.school_buys
             row.append(st)
         seats.append(row)
         views.append([Seat(game, p) for p in range(config.players)])
@@ -559,8 +591,13 @@ def play_games(
 
     def mask_for(seat: Seat, obs: Any, st: _Seat) -> np.ndarray:
         if not opts.positioning_phase:
-            return base_mask(seat, obs, opts.allow_reposition, opts.allow_freeze)
+            mask = base_mask(seat, obs, opts.allow_reposition, opts.allow_freeze)
+            if st.buy_limit is not None:
+                limit_buys(mask, seat, obs, st.buy_limit)
+            return mask
         mask = base_mask(seat, obs, st.arranging, opts.allow_freeze and st.arranging and not st.froze)
+        if st.buy_limit is not None:
+            limit_buys(mask, seat, obs, st.buy_limit)
         if st.arranging:
             # The end-of-turn step: Repositions (while any are left), one Toggle Freeze, End Turn.
             if st.moves_left <= 0:

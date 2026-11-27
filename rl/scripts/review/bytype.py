@@ -5,7 +5,10 @@ grouped by their types, and each group's boards are printed: the lobby's length,
 stats on turns 11 and 13, the Tier 5 and 6 minions and the win rate against the human winner boards
 on turn 13, and how many boards on turn 13 are of one of the lobby's types.
 
-    python bytype.py SEED0 N OUT.json [--tribes 1] [--curve standard|off] [--cap 80] [--workers 4]
+    python bytype.py SEED0 N OUT.json [--tribes 1] [--buys own|minions] [--curve standard|off] [--cap 80] [--workers 4]
+
+`--buys` plays the lobbies under type school's buy limit (`PlayOptions.school_buys`): a seat can buy
+only minions of the lobby's types (`own`), or only minions (`minions`).
 """
 
 import json
@@ -34,8 +37,14 @@ def main():
     opts.turn_stats = True
     opts.yardstick = YardstickSpec()
     config = LobbyConfig(tribes=tribes)
+    buys = opt("--buys", None)
+    opts.school_buys = buys
     player = Player(int(opt("--workers", 4)))
-    specs = [GameSpec(seed=seed0 + i, controllers=["agent"] * 8, probe_units=tuple(range(8))) for i in range(n)]
+    # The buy limit applies in games with their own number of minion types (`GameSpec.tribes`).
+    specs = [
+        GameSpec(seed=seed0 + i, controllers=["agent"] * 8, probe_units=tuple(range(8)), tribes=tribes if buys else None)
+        for i in range(n)
+    ]
     try:
         results = player.play(config, specs, {"agent": NET}, opts, record=(), seed=seed0)
     finally:
@@ -80,12 +89,13 @@ def main():
         "tribes": tribes,
         "curve": curriculum.label(opts.forced_curve),
         "cap": opts.max_steps_per_turn,
+        "buys": buys or "any",
         "by_types": table,
         "mean_over_types": over,
     }
     with open(out, "w") as f:
         json.dump(result, f)
-    print(f"{NET} | {n} lobbies of {tribes} minion type(s) | curve {result['curve']} | cap {result['cap']}")
+    print(f"{NET} | {n} lobbies of {tribes} minion type(s) | curve {result['curve']} | cap {result['cap']} | buys: {result['buys']}")
     print(f"{'types':<22} lobbies turns stats11 stats13   t5+  human  h@10%  own type")
     for r in [*table, {"types": "mean over the types", "lobbies": n, **over}]:
         print(

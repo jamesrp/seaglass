@@ -24,6 +24,14 @@ the seat that does wins the lobby. A mix is a list of `(minion types, share)`: t
 training lobbies is played with that many types (`GameSpec.tribes`), the rest as the lobby config
 says. It changes which lobbies are played and no decision inside them, and the evaluation is not
 changed by it.
+
+A one-type shop alone did not do it: the network rolled past the lobby's minions and bought Tavern
+spells and typeless minions for the board it already had. The buy limit (`PlayOptions.school_buys`,
+`train_lobby --school-buys own`) closes that way out: a model seat of a school lobby can buy only
+minions of the lobby's types, so no Tavern spell and no typeless minion. Every seat of the lobby is
+limited alike, and the seat that makes the type's cards work wins it. The limit masks Buy actions,
+so the policy still decides everything it does and PPO trains on those decisions as usual. It is a
+hand-written rule on what a seat buys, so `train_lobby --pure` refuses it, and no evaluation has it.
 """
 
 from __future__ import annotations

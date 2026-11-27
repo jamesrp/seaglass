@@ -36,9 +36,9 @@ python scripts/review/bytype.py 9800000 400 $REVIEW_DIR/bytype.json --tribes 1 -
 | `metaprobe.py` | Fights end-of-turn boards, read back from the replays, against the 13 human winner boards, with a `--scale` for the human stats and the win rate by comp. |
 | `curve_exp.py` | The forced-leveling what-if: four seats forced onto a curve against four plain seats. |
 | `temp_exp.py` | The greedy-play what-if: four seats at a given temperature against four sampling seats. |
-| `shoptake.py` | What a net buys from the shops it is shown: minions offered and bought, by the seat's Tavern Tier and the minion's Tier, and by card. `--curve standard` plays it as endgame school does, and `--tribes 1` in lobbies of one minion type, with the offers split by the lobby's type. |
+| `shoptake.py` | What a net buys from the shops it is shown: minions offered and bought, by the seat's Tavern Tier and the minion's Tier, and by card. `--curve standard` plays it as endgame school does, and `--tribes 1` in lobbies of one minion type, with the offers split by the lobby's type. `--buys own` plays under type school's buy limit. |
 | `whatwins.py` | What wins a place among the net's own seats: the average final place by the Tier 5 and 6 minions, the total stats and the minion type of a seat's board on one turn. |
-| `bytype.py` | What the net builds in lobbies of one minion type (`--tribes 1`), type by type: board stats on turns 11 and 13, Tier 5 and 6 minions, the win rate against human boards, and how many boards are of the lobby's type. |
+| `bytype.py` | What the net builds in lobbies of one minion type (`--tribes 1`), type by type: board stats on turns 11 and 13, Tier 5 and 6 minions, the win rate against human boards, and how many boards are of the lobby's type. `--buys own` plays under type school's buy limit (only minions of the lobby's types can be bought). |
 | `export.py` | Collects the numbers behind the review's two charts into `chartdata.json`. |
 | `cardtext.py` | Pulls each card's rules text from the engine's doc comments. |
 
