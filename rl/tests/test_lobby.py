@@ -4,6 +4,7 @@ checkpoints and evaluation."""
 from __future__ import annotations
 
 import copy
+import os
 
 import numpy as np
 import pytest
@@ -27,7 +28,7 @@ from seaglass_rl.features import (
 )
 from seaglass_rl.actions import action_from_index
 from seaglass_rl.model import BattlegroundsMLP
-from seaglass_rl.play import GameSpec, LobbyConfig, PlayOptions, Seat, placement_reward, play_games
+from seaglass_rl.play import GameSpec, LobbyConfig, Player, PlayOptions, Seat, placement_reward, play_games
 from seaglass_rl.ppo import build_batch, gae, ppo_update
 
 
@@ -406,3 +407,24 @@ def test_evaluate_reports_the_average_place() -> None:
     res = evaluate("heuristic", ["random"], LobbyConfig(players=4), games=4, agent_units=1)
     assert 1.0 <= res["avg_place"] <= 4.0
     assert sum(res["places"].values()) == 4
+
+
+class _KillsItsWorker:
+    """Unpickling this ends the process at once, as a kill for memory or a crash in native code would."""
+
+    def __reduce__(self):
+        return (os._exit, (1,))
+
+
+def test_a_dead_worker_stops_the_play_instead_of_hanging_it() -> None:
+    player = Player(2)
+    try:
+        bots = ["heuristic"] * 8
+        results = player.play(LobbyConfig(), [GameSpec(seed=s, controllers=bots) for s in (1, 2)], {}, PlayOptions(), record=())
+        assert sorted(r.seed for r in results) == [1, 2]
+        # The first worker's chunk carries a model source that kills the worker when it arrives.
+        specs = [GameSpec(seed=3, controllers=["learner"] + bots[1:]), GameSpec(seed=4, controllers=bots)]
+        with pytest.raises(RuntimeError, match="worker process"):
+            player.play(LobbyConfig(), specs, {"learner": _KillsItsWorker()}, PlayOptions(), record=())
+    finally:
+        player.close()

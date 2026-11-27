@@ -1026,9 +1026,30 @@ class Player:
         for i, c in enumerate(chunks):
             jobs.append((config, c, used_by(c), options, record, seed + 7919 * i))
         results: list[GameResult] = []
-        for part in self.pool.map(_play_chunk, jobs):
+        for part in self._map(jobs):
             results.extend(part)
         return results
+
+    def _map(self, jobs: list[tuple]) -> list[list[GameResult]]:
+        """`pool.map(_play_chunk, jobs)`, except that a worker that dies is an error.
+
+        `multiprocessing.Pool` replaces a worker that died (killed for memory, or a crash in native
+        code) and then waits for the lost task forever, so a run would hang with nothing in its log.
+        The workers are never retired, so one missing from the pool has died."""
+        workers = {w.pid for w in self.pool._pool}
+        pending = self.pool.map_async(_play_chunk, jobs)
+        while True:
+            try:
+                return pending.get(timeout=2.0)
+            except mp.TimeoutError:
+                gone = workers - {w.pid for w in self.pool._pool}
+                if gone:
+                    self.pool.terminate()
+                    self.pool = None
+                    raise RuntimeError(
+                        f"worker process {sorted(gone)[0]} died while playing games (killed for memory, or a "
+                        "crash in the engine): its games are lost, so this play is stopped"
+                    ) from None
 
     def close(self) -> None:
         if self.pool is not None:
