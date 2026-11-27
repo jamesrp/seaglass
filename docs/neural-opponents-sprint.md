@@ -506,9 +506,9 @@ So the late game is an exploration problem. The learner never pays for it, so it
 - **The starting line for 6b is the third row.** Put on the curve with no training, the network holds twice the Tier 5 and 6 minions and builds a slightly weaker board with them.
 - **Its last boards are 41% Mechs, 22% Pirates and 18% Dragons.** Beasts, Murlocs, Quilboar, Elementals and Aberrations are each 1% or less. 9kgamerbot's are spread over all ten types.
 
-**6b is built, and the first run has started.** `train_lobby --force-curve standard` passes its tests (`rl/tests/test_endgame_school.py`), and six iterations on CPU from iteration 1870 ran clean, with every model seat on Tier 4 on turn 7 and Tier 6 on turn 11.
+**6b is built.** `train_lobby --force-curve standard` passes its tests (`rl/tests/test_endgame_school.py`), and six iterations on CPU from iteration 1870 ran clean, with every model seat on Tier 4 on turn 7 and Tier 6 on turn 11.
 
-- **The run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, up to 500 iterations or 11 hours, and a check every 25 iterations.
+- **The first run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, up to 500 iterations or 11 hours, and a check every 25 iterations.
 - **The learning rate is higher than the capacity test's.** That run fine-tuned at 2e-5 annealed to zero and held its style. This one has to change its style, so it starts with a fresh optimizer at 1e-4.
 - **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
 
