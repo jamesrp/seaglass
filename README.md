@@ -27,6 +27,7 @@ The current sprint is about strength in Solos. The plan, the critique behind it,
 3. **Raise throughput**, in parallel. Move observation encoding out of Python and batch inference.
 4. **Add search inside the turn**, scored by the learned critic, and use it as the teacher.
 5. **Freeze `bots/`** as a reference opponent and teacher.
+6. **Teach the late game.** A [review after Stage 4](docs/review-2026-11-27.md) found that the best network wins on Tavern Tiers 2 and 3 and builds boards far below human ones. Measure against human winner boards, train in lobbies where every seat is leveled on a human curve, then take that scaffold away.
 
 ---
 
@@ -52,7 +53,7 @@ Seaglass enforces a strict boundary between **game rules** and **machine learnin
 ```text
 seaglass/
 ├── README.md          # Workspace overview (this file)
-├── docs/              # Project plans (neural-opponents-sprint.md)
+├── docs/              # Project plans (neural-opponents-sprint.md) and reviews (review-2026-11-27.md)
 ├── engine/            # Rust crate (`seaglass`): Tavern + Combat engine & PyO3 bindings
 │   ├── README.md
 │   ├── Cargo.toml

@@ -5,7 +5,7 @@
 This is the working plan for making the neural opponents stronger.
 
 - [Section 1](#1-aims-and-decisions) states the aims and the decisions that scope the sprint.
-- [Section 2](#2-the-sprint) is the sprint: five stages, each with a gate.
+- [Section 2](#2-the-sprint) is the sprint: five stages, each with a gate, and a sixth added by the [review after Stage 4](review-2026-11-27.md).
 - [Section 3](#3-why-this-order-the-critique) is the critique of the current approach that the plan answers.
 - [Section 4](#4-measurements) holds the measurements, and [Section 5](#5-caveats) says how far to trust them.
 
@@ -38,6 +38,7 @@ Each stage has a gate. A later stage should not start until the gate before it p
 | 3. Raise throughput (parallel) | Observation encoding out of Python, batched inference | 5 times more games per core, with 10 times as the target |
 | 4. Search inside the turn | Policy-guided search scored by the learned critic | Search plus net beats the net alone, then the distilled net beats the old net |
 | 5. Freeze `bots/` | A pinned reference opponent, useful ideas ported to `rl/` | No hand-written card knowledge in the training path |
+| 6. Teach the late game | A human yardstick on the ladder, then a network trained in lobbies that reach the late game | With no forced leveling, the network levels and wins more against human winner boards |
 
 ### Stage 1: Build the Measuring Instrument
 
@@ -438,6 +439,80 @@ So the method works with no hand-written play at all: from nothing it passed eve
 | Iteration | 50 | 100 | 200 | 300 | 450 | 600 | 750 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Fast ladder, trainer's check | 5.88 | 3.55 | 2.80 | 2.26 | 2.12 | 2.10 | 2.03 |
+
+### Stage 6: Teach the Late Game
+
+*Added 2026-11-27, after the [review after Stage 4](review-2026-11-27.md).*
+
+The review played the best network (iteration 1870) and compared it with strong human play on this patch. Three findings set this stage.
+
+- **The network wins on Tavern Tiers 2 and 3.** On turn 11 its seats average Tier 3.1, where strong players are on Tier 6. It has one real comp, Mech magnetize, and almost never holds a Tier 5 or 6 engine. Search does not change either.
+- **Its boards are far below human boards.** On turns 12 to 15 they win 1% to 5% of fights against 13 published human winner boards, which hold about 20 times the stats. The rule bots and SovereignBot are in the same range, so every ladder so far has ranked agents inside a low-power field.
+- **It is a stable point, so more of the same will not move it.** Forcing the network onto a human leveling curve costs it 0.57 places against its unforced self. Leveling pays only for a player who can turn Tier 5 and 6 shops into a scaling board, and nobody in the training pool can.
+
+So the late game is an exploration problem. The learner never pays for it, so it never sees it, so it never learns that it pays. This stage puts the learner there directly, measures it against humans, and then takes the scaffold away.
+
+| Step | Deliverable | Gate |
+| :--- | :--- | :--- |
+| 6a. Human yardstick | Every ladder rating reports the win rate against human winner boards, with the style behind it | The number reproduces between runs, and every later step is judged by it |
+| 6b. Endgame school | A network trained with every model seat forced onto the standard leveling curve | Its boards grow several-fold on the forced curve, and Tier 5 and 6 engines appear |
+| 6c. Take the scaffold away | The same network trained with fewer and then no forced seats, with the school network kept in the pool | With no curve it still levels, holds its human win rate, and beats iteration 1870 head to head |
+| 6d. Lift the caps | A higher action cap, and board order re-tested on late boards | No loss of strength per hour of training |
+
+**6a. The human yardstick** (`yardstick.py`). Placement and the probe are relative to the field. The yardstick is the absolute mark.
+
+- It fights the agent's end-of-turn boards on turns 10 to 16 against a fixed set of human winner boards, in the combat simulator, at the published stats and at a tenth of them. The second number moves while the first is still near zero.
+- The boards are data (`rl/seaglass_rl/data/human_boards/`). The first set is the 13 example winner boards from hspulse.net's comp pages for this patch. Boards from real game logs should replace it: `replay/` already rebuilds a game from a `Power.log`, and the Season 14 logs have to be saved before Patch 37.2 on 2026-12-01.
+- A rating also reports the board's total stats and its Tier 5 and 6 minions by turn, and the minion types of the agent's last boards.
+- **The gate number** is the win rate on turn 13 at the published stats.
+
+**6b. Endgame school** (`curriculum.py`, `train_lobby --force-curve standard`). Every model seat is put on the standard curve by the environment: Tier 2 on turn 2, 3 on 5, 4 on 7, 5 on 9 and 6 on 11.
+
+- Whenever a forced seat is below the curve and the Tavern upgrade is legal, the environment takes the upgrade. It is not one of the policy's decisions and is not recorded, so PPO does not train on it.
+- Every model seat pays the same cost, so nobody is punished for leveling, and the learner spends turns 9 and later in Tier 5 and 6 shops against boards built there.
+- The curve is a hand-written play rule. It is scaffolding in the same sense as the rule-bot warm start: `--pure` refuses it, and step 6c removes it.
+- The run continues from iteration 1870 with the capacity test's recipe, a higher learning rate (the old one had annealed to zero) and a higher action cap.
+- **If the boards grow several-fold and engines appear,** exploration was the block. Go to 6c.
+- **If nothing changes with the whole lobby on Tier 6,** the block is structural: the action cap, the card representation, or credit across five or more turns. Lift the cap further (6d), add the auxiliary head that predicts the board's strength a few turns ahead (`--aux-coef`), and repeat.
+
+**6c. Take the scaffold away** (`--force-share`). A network that was always leveled by the environment has never had to choose to level.
+
+- Train on with half the model seats forced, then none. An unforced seat that is below the curve can tell it is on its own, so the policy can learn what leveling is worth there.
+- Keep the endgame-school network in the opponent pool at 15% to 25% of seats, on its curve, so the learner keeps meeting boards that scale.
+- A checkpoint trained with some seats unforced is rated with no curve. That is the only rating that says whether a network levels by itself.
+- **Gate.** With no curve: mean Tier 4.5 or more on turn 10, the human win rate of 6b held, and a head-to-head win over iteration 1870.
+- **If it slides back to Tier 2 and still wins,** the engine's balance of damage and tempo is the next suspect. Compare lobby length and damage per turn with the human logs: the network's lobbies last 17.4 turns, and the published human winners finish on turns 12 to 15.
+
+**6d. Lift the caps.** The checkpoints so far were trained with at most 30 decisions a turn, and that cap already binds in 5% to 8% of turns 8 to 12. The top human comps of this patch take many actions a turn. Board order is also outside the policy (`--no-reposition`), and the position solver was off because it measured no gain on Tier 2 stat piles. Raise the cap toward the engine's own turn timer and measure the cost, and re-test `--auto-position` on boards with Taunts, cleaves and Deathrattle engines.
+
+**After this stage.** Return to search and distillation. A critic that has seen engines pay has something for the search to find and for distillation to pass on. Until then the search stays at its current default.
+
+**Not worth more time before then:** more iterations of the current recipe, a bigger network, more search knobs, or a longer search horizon scored by the same critic.
+
+**The patch.** The engine models Patch 37.0.2. Patch 37.2 (Season 15) goes live on 2026-12-01 and removes Trinkets and Dark Gifts. This stage finishes on 37.0.2: a method that finds engines on one patch should find them on the next, and the hours from scratch to the gate are the cost of a new patch.
+
+#### Stage 6 Progress (2026-11-27): the yardstick and the school are built
+
+**6a is built.** `ladder rate`, `ladder versus` and the trainer's check now report the human win rate, the board's stats and Tier 5 and 6 minions by turn, and the minion types of the last boards. The baselines on the fast ladder, 500 lobbies each:
+
+| Agent | Place | Tier on turns 7 / 10 / 13 | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | 1.77 ± 0.05 | 2.6 / 2.9 / 4.0 | 1,478 | 1.4 | 1.6% | 21.8% |
+| Iteration 1870, another seed | 1.75 ± 0.05 | 2.6 / 2.9 / 3.9 | 1,446 | 1.3 | 1.5% | 21.6% |
+| Iteration 1870 on the standard curve | 1.99 ± 0.07 | 4.0 / 5.0 / 6.0 | 1,316 | 2.6 | 1.2% | 19.8% |
+| 9kgamerbot | 4.31 ± 0.14 | 4.0 / 5.4 / 6.0 | 642 | 2.6 | 0.1% | 8.2% |
+
+- **The gate number reproduces.** Two seeds give 1.6% and 1.5% at the published stats, and 21.8% and 21.6% at a tenth of them. The review measured 2.6% in lobbies of the network against itself, where boards grow a little larger than against the rule bots.
+- **The starting line for 6b is the third row.** Put on the curve with no training, the network holds twice the Tier 5 and 6 minions and builds a slightly weaker board with them.
+- **Its last boards are 41% Mechs, 22% Pirates and 18% Dragons.** Beasts, Murlocs, Quilboar, Elementals and Aberrations are each 1% or less. 9kgamerbot's are spread over all ten types.
+
+**6b is built, and the first run has started.** `train_lobby --force-curve standard` passes its tests (`rl/tests/test_endgame_school.py`), and six iterations on CPU from iteration 1870 ran clean, with every model seat on Tier 4 on turn 7 and Tier 6 on turn 11.
+
+- **The run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, up to 500 iterations or 11 hours, and a check every 25 iterations.
+- **The learning rate is higher than the capacity test's.** That run fine-tuned at 2e-5 annealed to zero and held its style. This one has to change its style, so it starts with a fresh optimizer at 1e-4.
+- **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
+
+Results are in [`docs/results/stage6/`](results/stage6/). They were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
 
