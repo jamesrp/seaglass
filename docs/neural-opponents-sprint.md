@@ -511,10 +511,28 @@ So the late game is an exploration problem. The learner never pays for it, so it
 - **The first run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, and a check every 25 iterations. An iteration takes about 14 seconds there, so the run is set to 2,400 iterations or 10 hours, whichever comes first.
 - **Its first check found a bug.** With `--replays` the check keeps replays, and the forced upgrade passed a replay note the engine does not take. The run stopped at iteration 25. The forced upgrade and the automatic reorder now carry the engine's `forced` note (commit `332387d`), and the run continued from its saved iteration 25 with `--resume`.
 - **Its second check found a combat that never ends.** A `Heroic Broodmother` with the `Invulnerability` Dark Gift takes no damage while attacking and gets its Divine Shield back on every attack. Against a human board with thousands of Health it can neither die nor win, and the engine had no limit on combat length, so the fight ran until the worker ran out of memory and the check waited for it forever. The engine now calls a combat a draw after 1,000 attack turns ([`engine/docs/combat.md`](../engine/docs/combat.md) §5.2). The same fight can come up between two late boards in a lobby, so this guards the training games too. The run continued from its saved iteration 50.
+- **A worker that dies now stops the run.** `multiprocessing.Pool` waits forever for the task of a worker that died, which is how the endless combat became a silent hang. `Player.play` now raises instead.
+
+**Run A went the wrong way, and its learning rate is why.** Its checks on the curve, 500 lobbies each:
+
+| Iteration | Place | Win rate against human boards, turn 13 | Same, human stats at 10% | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Start (iteration 1870 on the curve) | 1.99 | 1.2% | 19.8% | 1,316 | 2.6 |
+| 75 | 1.95 | 1.1% | 19.0% | 1,244 | 2.5 |
+| 100 | 2.06 | 1.0% | 18.6% | 1,256 | 2.2 |
+| 150 | 2.03 | 0.8% | 16.0% | 1,078 | 1.9 |
+| 200 | 2.03 | 0.8% | 16.4% | 1,092 | 1.9 |
+| 250 | 2.10 | 0.5% | 14.1% | 1,000 | 1.5 |
+
+- **The policy re-heated.** Its entropy rose from 0.46 to 0.57 in 100 iterations. That is the entropy `runs/stage2-tf` held at a constant 1e-4, with a ladder place near 2.0. The later runs cooled the network at 5e-5 and 2e-5, annealed, to an entropy of 0.49 and a place of 1.72. A constant 1e-4 undoes that cooling, and whatever the school teaches cannot be read under it.
+- **It did learn to level.** Rated with no curve, the iteration-250 network is on Tier 3.1, 3.9 and 5.7 on turns 7, 10 and 13, against 2.6, 2.9 and 4.0 for the starting network, and on Tier 6 on turn 15. Its boards are weaker: 929 median stats on turn 13 and 0.3% against human boards, for a place of 2.05 ± 0.07.
+- **Run A was stopped at iteration 278.** Its files are kept in `runs/school/a`.
+
+**Run B** (`runs/school/b`) starts from iteration 1870 again with `--lr 5e-5 --anneal-lr` over 1,800 iterations and everything else as in run A. Annealed to zero, its last network is cooled like the starting one, so the two compare directly.
 - **The learning rate is higher than the capacity test's.** That run fine-tuned at 2e-5 annealed to zero and held its style. This one has to change its style, so it starts with a fresh optimizer at 1e-4.
 - **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
 
-Results are in [`docs/results/stage6/`](results/stage6/). They were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
+Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
 
