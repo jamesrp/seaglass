@@ -689,7 +689,7 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **Some of it carries over to one-type lobbies with no limit.** There Quilboar boards hold 2,110 stats from 1,162 and Demon boards 1,910 from 1,533. The mean over the types is 8% above run B's last network, and 75% of boards are of the lobby's type, from 70%.
 - **It buys the lobby's minions twice as often** (`shoptake.py --tribes 1`, 150 lobbies, from turn 9 on, the seven weak types). Under the limit it takes 12.8% of the Tier 5 and 6 minions of the lobby's type it is shown, from 5.9%, and 3.2% of the lower ones, from 1.5%. With no limit it takes 6.3% and 1.6%, from 3.7% and 0.8%, and 4.4% of the high-tier Beasts, from 0.5%. With no limit 29 of 78 Tier 5 and 6 cards are never bought, from 43 of 78.
 - **The three strong types gave a little back,** as every run has in its warm first half: Mech and Dragon boards are 4% to 10% smaller under the limit.
-- **The five-type ladder has not moved yet.** The checks stand at place 1.89 and 1.0% to 1.1% against human boards at iteration 600, in the same dip runs B and D had there (2.08 and 1.2%, 2.01 and 0.8%). Runs B and D gained on the ladder only in their last third, so the last network decides.
+- **The five-type ladder has not moved yet.** The checks stand at place 1.89 and 1.0% to 1.1% against human boards at iteration 600, in the same dip runs B and D had there (2.08 and 1.2%, 2.01 and 0.8%). Runs B and D gained on the ladder only in their second half, so the last network decides.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
