@@ -641,7 +641,7 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 | Run B, iteration 1800 | 1.6% | 3.7% | 0.5% | 4.9% | 695 | 43 of 78 |
 | Run D (type school), iteration 650 | 0.4% | 0.9% | 0.1% | 3.6% | 965 | 63 of 82 |
 
-- **With only Beasts in the shop, run B's last network buys 6 of the 1,135 Tier 5 and 6 Beasts it is shown** and none of 3,429 lower Beasts. It rolls, buys typeless minions at about 2%, and spends the rest on spells for the board it has.
+- **With only Beasts in the shop, run B's last network buys 6 of the 1,135 Tier 5 and 6 Beasts it is shown** and none of 3,429 lower Beasts. It rolls and buys Tavern spells for the board it has: from turn 9 on in Beast lobbies, 32% of its actions are rolls, 12% buy a spell and 1% buy a minion.
 - **Its board is full by turn 8, so a new minion replaces a grown one.** A Tier 6 minion off the shelf holds fewer stats than a Tier 2 minion with four turns of buffs on it. It is worth the slot only as an engine, over turns the lobby does not last.
 - **Run D, the first type school run, is at its halfway mark and tries fewer of these cards, not more.** (`runs/school/d` on the Mac mini, from run B's last network, `--school-tribes 1:0.5`, otherwise as run B.) At iteration 650 its weak-type boards are 10% to 35% larger than run B's were at iteration 790, and it gets them by rolling more and buying less. Its checks on the five-type ladder are down to 0.7% against human boards. Run B gained only in its second half, so the last network decides.
 
