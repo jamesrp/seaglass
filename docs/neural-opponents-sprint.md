@@ -529,6 +529,20 @@ So the late game is an exploration problem. The learner never pays for it, so it
 - **Run A was stopped at iteration 278.** Its files are kept in `runs/school/a`.
 
 **Run B** (`runs/school/b`) starts from iteration 1870 again with `--lr 5e-5 --anneal-lr` over 1,800 iterations and everything else as in run A. Annealed to zero, its last network is cooled like the starting one, so the two compare directly.
+
+**What the networks buy on Tier 6** (`rl/scripts/review/shoptake.py`, 120 lobbies of eight seats on the standard curve, shops seen with 3 or more Gold):
+
+| Network | Tier 5 minions bought, of those offered on Tavern Tier 6 | Tier 6 minions bought | Tier 5 and 6 cards bought at least 1 time in 10, of 85 | Volumizers bought |
+| :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | 1.9% | 3.3% | 8 | 67% to 75% |
+| Run A, iteration 250 | 0.6% | 2.2% | 4 | 36% to 42% |
+| Run B, iteration 230 | 2.2% | 4.2% | 11 | 45% to 49% |
+
+- **On Tier 6 the starting network passes on almost every high-tier minion.** It buys 8 of the 85 Tier 5 and 6 cards it is shown with any regularity (`Falling Sky Golem`, `Hopebringer`, `Charging Czarina`, `Crimson Vindicator`, `Resourceful Robot` and three more) and never buys most of the rest. It still buys two of every three Volumizers.
+- **Run B is moving toward Dragons.** By iteration 230, `Crimson Vindicator` went from 36% to 59%, `Bronze Timewalker` from 1% to 16%, `Persistent Poet` from 4% to 18%, `Firescale Hoarder` from 0% to 12%, `Felfire Conjurer` from 10% to 19% and `Heroic Broodmother` from 3% to 11%. The Volumizers fell from about 70% to about 47%. Its checks on the curve are level with the starting line so far (1.1% to 1.4% against human boards), so the new buys have not yet made stronger boards.
+- **Run A unlearned.** Its take rates fell across the board, which fits the re-heating.
+
+The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
 - **The learning rate is higher than the capacity test's.** That run fine-tuned at 2e-5 annealed to zero and held its style. This one has to change its style, so it starts with a fresh optimizer at 1e-4.
 - **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
 

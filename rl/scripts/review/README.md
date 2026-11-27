@@ -20,6 +20,7 @@ python scripts/review/analyze.py selfplain                               # level
 python scripts/review/show.py $REVIEW_DIR/games/allsearch_9200000.json winner
 python scripts/review/metaprobe.py selfplain --scale 0.1
 python scripts/review/curve_exp.py standard 9400000 200 $REVIEW_DIR/games
+python scripts/review/shoptake.py 9500000 120 $REVIEW_DIR/shoptake.json --curve standard --cap 80
 ```
 
 `watch.py` writes one `MODE_SEED.json` (the per-turn log of all eight seats) and one `MODE_SEED.replay.pb` (the engine replay) per lobby. It runs one lobby at a time in one process, so start several with different seed ranges to use more cores.
@@ -33,6 +34,7 @@ python scripts/review/curve_exp.py standard 9400000 200 $REVIEW_DIR/games
 | `metaprobe.py` | Fights end-of-turn boards, read back from the replays, against the 13 human winner boards, with a `--scale` for the human stats and the win rate by comp. |
 | `curve_exp.py` | The forced-leveling what-if: four seats forced onto a curve against four plain seats. |
 | `temp_exp.py` | The greedy-play what-if: four seats at a given temperature against four sampling seats. |
+| `shoptake.py` | What a net buys from the shops it is shown: minions offered and bought, by the seat's Tavern Tier and the minion's Tier, and by card. `--curve standard` plays it as endgame school does. |
 | `export.py` | Collects the numbers behind the review's two charts into `chartdata.json`. |
 | `cardtext.py` | Pulls each card's rules text from the engine's doc comments. |
 
