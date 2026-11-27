@@ -147,6 +147,30 @@ def test_forced_seats_follow_the_curve_and_the_upgrades_are_not_recorded() -> No
     assert all(s.actions.get("forced_upgrade", 0) == 0 for stats in plain.turn_stats for s in stats)
 
 
+def test_forced_upgrades_are_marked_in_a_kept_replay(tmp_path) -> None:
+    """A rating with `--replays` keeps the engine replay of a forced lobby: each forced upgrade is
+    one step with the engine's `forced` note, and the replay still re-simulates."""
+    curve = curriculum.CURVES["standard"]
+    options = PlayOptions(forced_curve=curve, turn_stats=True, keep_replays=True, max_steps_per_turn=12, allow_reposition=False)
+    controllers = [LEARNER] * 3 + ["old"] * 2 + ["heuristic"] * 3
+    res = _play(options, controllers)
+    counted = sum(s.actions.get("forced_upgrade", 0) for stats in res.turn_stats for s in stats)
+    assert counted >= 4
+    path = tmp_path / "school.replay.pb"
+    res.save_replay(path)
+    timeline = seaglass.Timeline.load(str(path))
+    assert timeline.is_faithful
+    # (The engine also marks the End Turn it makes for a seat at the step cap.)
+    made = [f for f in timeline if f.kind == "act" and f.note and f.note.get("forced")]
+    forced = [f for f in made if f.action.kind == "upgrade_tavern"]
+    assert len(forced) == counted
+    assert all("logp" not in f.note for f in forced)
+    # The seat's own upgrades are its decisions: none of them is marked.
+    own = sum(s.actions.get("upgrade_tavern", 0) for stats in res.turn_stats for s in stats)
+    upgrades = [f for f in timeline if f.kind == "act" and f.action.kind == "upgrade_tavern"]
+    assert len(upgrades) == counted + own
+
+
 def test_forced_controllers_limit_the_curve_to_one_side() -> None:
     curve = curriculum.CURVES["to4"]
     opts = PlayOptions(turn_stats=True, max_steps_per_turn=10, forced_curve=curve, forced_controllers=("old",))

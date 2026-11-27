@@ -119,6 +119,19 @@ def test_recorded_trajectories_hold_no_auto_moves() -> None:
         assert "reposition" not in kinds
 
 
+def test_auto_moves_are_marked_in_a_kept_replay(tmp_path) -> None:
+    opts = PlayOptions(auto_position=PositionSpec(library=SMALL), turn_stats=True, keep_replays=True, allow_reposition=False)
+    (res, *_) = _play(opts)
+    counted = sum(t.actions.get("auto_position", 0) for stats in res.turn_stats for t in stats)
+    assert counted > 0
+    path = tmp_path / "auto.replay.pb"
+    res.save_replay(path)
+    timeline = seaglass.Timeline.load(str(path))
+    assert timeline.is_faithful
+    made = [f for f in timeline if f.kind == "act" and f.note and f.note.get("forced")]
+    assert sum(1 for f in made if f.action.kind == "reposition") == counted
+
+
 def test_auto_position_is_solo_only() -> None:
     model = BattlegroundsMLP(seed=0, kind_prior=True)
     with pytest.raises(ValueError):

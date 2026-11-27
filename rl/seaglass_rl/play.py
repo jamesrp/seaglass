@@ -61,7 +61,7 @@ from .actions import (
 )
 from .bots import HeuristicBot, RandomBot
 from .gamerbot import NineKGamerBot
-from .env import compute_board_power
+from .env import FORCED, compute_board_power
 from . import features, packing
 from .features import NUM_SLOTS, PLAYER_DIM, SLOT_NUM_DIM, encode_observation, fast_encode, fast_mask
 from .model import BattlegroundsMLP
@@ -583,7 +583,7 @@ def play_games(
             idx = ACTION_TO_INDEX[("reposition", f, t)]
             if not game.is_legal(p, action_from_index(idx)):
                 break
-            _apply(game, p, st, idx, {"auto": "position"} if opts.keep_replays else None, kind="auto_position")
+            _apply(game, p, st, idx, FORCED, kind="auto_position")
 
     def model_step(g: int, p: int, idx: int, note: dict[str, Any] | None, board: int) -> None:
         """Take a model's action, with the end-of-turn step ("prepping the board for battle"): its
@@ -612,15 +612,17 @@ def play_games(
 
     def force_levels(g: int, p: int) -> None:
         """The forced curve: while the seat is below the curve's Tier for the turn and the Tavern
-        upgrade is legal, the environment takes it. Not a decision of the seat: nothing is recorded,
-        and it does not count against the step cap."""
+        upgrade is legal, the environment takes it. Not a decision of the seat: nothing is recorded
+        in its trajectory, and it does not count against the step cap. The step carries the engine's
+        `forced` note, as the automatic reorder does: it costs none of the seat's turn timer, and a
+        replay shows it as made for the seat."""
         game, st = games[g], seats[g][p]
         target = target_tier(curve, game.turn)
         while st.behind and not game.is_done(p) and game.is_legal(p, upgrade):
             if game.observe(p).tavern_tier >= target:
                 st.behind = False
                 break
-            _apply(game, p, st, UPGRADE_INDEX, {"auto": "curve"} if opts.keep_replays else None, kind="forced_upgrade")
+            _apply(game, p, st, UPGRADE_INDEX, FORCED, kind="forced_upgrade")
             st.steps -= 1
 
     def close(traj: Trajectory, reward: float, place: int) -> None:

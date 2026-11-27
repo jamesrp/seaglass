@@ -87,7 +87,7 @@ Self-play alone settled on Tavern Tiers 2 and 3 ([`docs/review-2026-11-27.md`](.
 
 `--force-curve standard` puts it there. On every model seat (the learner and its snapshots, never a rule bot), whenever the seat is below the curve's Tavern Tier for the turn and the upgrade is legal, the environment takes the upgrade. The standard curve is Tier 2 on turn 2, 3 on 5, 4 on 7, 5 on 9 and 6 on 11; `fast`, `slow`, `to4`, `to5`, `late` and `turn:tier,...` lists are the others.
 
-- **It is an environment event.** The forced upgrade is not one of the policy's decisions: it is counted as `forced_upgrade`, is not recorded in the trajectory, and does not count against the step cap. PPO never trains on it. The policy may still level faster than the curve by itself.
+- **It is an environment event.** The forced upgrade is not one of the policy's decisions: it is counted as `forced_upgrade`, is not recorded in the trajectory, and does not count against the step cap or the turn timer. PPO never trains on it. In a replay it carries the engine's `forced` note, which the viewer shows as "auto". The policy may still level faster than the curve by itself.
 - **It is scaffolding,** a hand-written play rule like the rule-bot warm start: `--pure` refuses it. `--force-share 0.5` forces each model seat of a training game with that chance, to take the scaffold away in steps. An unforced seat below the curve can tell it is on its own. With a share below 1 the evaluation plays with no curve, since only that says whether the network levels by itself.
 - **Search** (`search.py`) does not apply the curve inside its lines.
 
