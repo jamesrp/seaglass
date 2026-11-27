@@ -364,6 +364,30 @@ The test was two matched PPO continuations from iteration 1370, run side by side
 Next:
 - **Improve the search itself.** First tune its knobs with short head-to-head runs. Then score lines at the start of the next turn, with this turn's combat simulated against sampled opponent boards (see "Later: Search Beyond the Turn").
 
+#### Stage 4, Tuning the Search and Looking Past the Turn (2026-11-26)
+
+Each variant searched in 4 seats of 400 lobbies against the iteration-1870 network without search in the other 4, on the same seeds. The table gives the searching side's average place (the network alone is 4.5 minus the gap, about 4.8 to 4.9). The difference column is paired by lobby against the default, at two sigma. Lower is better.
+
+| Variant | Searching side | Against the default |
+| :--- | :--- | :--- |
+| Default: 8 candidates, 16 lines, line temperature 1, `c_visit` 50 | 4.125 | — |
+| 32 lines | 4.138 | +0.013 ± 0.110 |
+| 4 candidates | 4.195 | +0.070 ± 0.111 |
+| 16 candidates, 32 lines | 4.227 | +0.102 ± 0.110 |
+| Smaller σ scale (`c_visit` 10) | 4.274 | +0.149 ± 0.111 |
+| Larger σ scale (`c_scale` 2) | 4.085 | -0.040 ± 0.111 |
+| Larger σ scale, line temperature 0.5 | 4.084 | -0.041 ± 0.111 |
+| Line temperature 0.5 | 4.113 | -0.012 ± 0.111 |
+| Greedy lines (temperature 0) | 4.109 | -0.016 ± 0.117 |
+| Scored at the start of the next turn, rule-bot opponent boards | 4.072 | -0.052 ± 0.113 |
+| Scored at the start of the next turn, the network's own boards | 4.059 | -0.066 ± 0.113 |
+| Scored at the end of the next turn, the network's own boards | 4.159 | +0.034 ± 0.112 |
+
+- **The default knobs are near the optimum.** Only the smaller σ scale is clearly worse. Every other change is within ±0.11, the most 400 lobbies can resolve.
+- **Scoring at the start of the next turn helps a little.** The line ends its turn, fights a sampled opponent board, starts the next turn (with its Gold and a fresh shop) and is scored there. That gave the best two results, 4.059 with the network's own boards and 4.072 with the rule bots'. Both are 0.05 to 0.07 better than the default, but inside the interval.
+- **Scoring at the end of the next turn does not.** It came out at 4.159. Playing a whole extra turn on guessed shops and guessed opponents adds noise faster than information, as the Stage 4 caution predicted.
+- **The confirmation was stopped early.** It was an 800-lobby rerun on a fresh seed, default against next-turn-start scoring with greedy lines. The default half finished at 4.187 ± 0.030. The second half was stopped when the weekend's runs were wrapped up early.
+
 ### Later: Search Beyond the Turn (to Evaluate)
 
 These came out of a design discussion with James on 2026-11-23. Each one is to be built behind a flag and judged head to head (`ladder.versus`) and on the slow ladder, like everything else.
@@ -394,6 +418,26 @@ There is no tree below the root, no combat in the search and no model of opponen
 - Keep hand-written card knowledge out of the training path. The static card features already give the network what it needs.
 
 **Gate.** Nothing on the training path names a card.
+
+#### Stage 5 Result (2026-11-26): the gate passes; the pure network is strong but behind the warm-started one
+
+- **The gate.** `rl/tests/test_stage5.py` checks the modules `train_lobby --pure` trains with: the trainer, play, encoding, the network, PPO and the search. No string in them names a card, hero, trinket or Dark Gift. `--pure` games hold no rule bots, and `--pure` refuses everything that would bring rule-bot play into training: `--init`, bot seats, `--auto-position`, `--aux-coef`.
+- **The bots stay as anchors.** The bots stay as the ladder's anchors and as opponents, and every rating now records an `anchors_fingerprint` of their sources.
+- **The four ideas are ported into `rl/`, with tests.** They are the placement critic, turn-level advantages, auxiliary heads and Gumbel targets.
+
+**The pure repeat.** It is the default transformer, trained from scratch with no warm start and no rule bots in training, on the GPU. It was planned for 3,000 iterations and stopped early, at iteration 795 (about 51,000 games), when the weekend's runs were wrapped up. Its last snapshot is iteration 790.
+
+| Pure network, iteration 790 | Result |
+| :--- | :--- |
+| Fast ladder, fresh seed | 2.02 ± 0.04: far ahead of every rule bot (9kgamerbot places 4.31) |
+| Slow ladder | 2.66 ± 0.11, with SovereignBot at 2.03 ± 0.11 |
+| Head to head with the warm-started iteration-1870 network, 400 lobbies | 5.08 against 3.92 |
+
+So the method works with no hand-written play at all: from nothing it passed every rule bot. On this budget it is clearly behind the line that started from a 9kgamerbot clone and had about 120,000 games. Its trainer's check was still improving slowly when it stopped:
+
+| Iteration | 50 | 100 | 200 | 300 | 450 | 600 | 750 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Fast ladder, trainer's check | 5.88 | 3.55 | 2.80 | 2.26 | 2.12 | 2.10 | 2.03 |
 
 ### Not in This Sprint
 
