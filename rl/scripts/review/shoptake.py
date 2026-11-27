@@ -4,10 +4,12 @@ A shop "view" is a turn's first shop or the shop after a roll, counted when the 
 to buy from it (3 or more). For every view this counts the minions offered, by the seat's Tavern
 Tier and the minion's Tier, and the ones the seat buys before its next roll or the end of the turn.
 
-    python shoptake.py SEED0 N OUT.json [--curve standard|off] [--cap 80] [--from-turn 9]
+    python shoptake.py SEED0 N OUT.json [--curve standard|off] [--cap 80] [--from-turn 9] [--tribes 5]
 
 All eight seats are the net (NET). `--curve` forces every seat onto a leveling curve
-(`curriculum.py`), as in endgame school; the default is the checkpoint's own.
+(`curriculum.py`), as in endgame school; the default is the checkpoint's own. `--tribes` sets the
+minion types per lobby, as in type school. The last table splits the offers from `--from-turn` on
+by the lobby's types: minions of one of them ("own") against typeless ones.
 """
 
 import json
@@ -31,10 +33,19 @@ OFFER: Counter = Counter()  # (seat's Tavern Tier, minion's Tier) -> minions off
 BUY: Counter = Counter()  # the same key -> minions bought
 CARD_OFFER: Counter = Counter()  # (minion's Tier, name) -> offered, on FROM_TURN and later
 CARD_BUY: Counter = Counter()
+CARD_TYPES: dict = {}  # (minion's Tier, name) -> the card's minion types
+TYPE_OFFER: Counter = Counter()  # (the lobby's types, "own" | "typeless", "low" | "high") -> offered, on FROM_TURN and later
+TYPE_BUY: Counter = Counter()
 VIEW: dict = {}  # (game, player) -> the view the seat is looking at
 FROM_TURN = 9
 
 _orig_apply = play._apply
+
+
+def _type_key(game, u):
+    """Where a shop minion counts in the split by the lobby's types."""
+    lobby = "+".join(sorted(game.tribes)) or "every type"
+    return lobby, "own" if u.tribes else "typeless", "high" if u.tavern_tier >= 5 else "low"
 
 
 def _apply(game, p, st, idx, note, kind=None):
@@ -51,12 +62,15 @@ def _apply(game, p, st, idx, note, kind=None):
                         OFFER[(o.tavern_tier, u.tavern_tier)] += 1
                         if game.turn >= FROM_TURN:
                             CARD_OFFER[(u.tavern_tier, u.name)] += 1
+                            CARD_TYPES[(u.tavern_tier, u.name)] = sorted(u.tribes)
+                            TYPE_OFFER[_type_key(game, u)] += 1
         if a.kind == "buy" and v["live"]:
             u = o.shop[a.args[0]]
             if not u.is_spell:
                 BUY[(o.tavern_tier, u.tavern_tier)] += 1
                 if game.turn >= FROM_TURN:
                     CARD_BUY[(u.tavern_tier, u.name)] += 1
+                    TYPE_BUY[_type_key(game, u)] += 1
         elif a.kind == "refresh":
             v["rolled"] = True
     return _orig_apply(game, p, st, idx, note, kind)
@@ -77,7 +91,7 @@ def main():
     if curve != "checkpoint":
         opts.forced_curve = curriculum.parse_curve(curve)
     opts.max_steps_per_turn = int(opt("--cap", opts.max_steps_per_turn))
-    cfg = LobbyConfig()
+    cfg = LobbyConfig(tribes=int(opt("--tribes", LobbyConfig().tribes)))
     for i in range(n):
         VIEW.clear()
         play.play_games(cfg, [GameSpec(seed=seed0 + i, controllers=["agent"] * 8)], {"agent": model}, opts, record=())
@@ -87,7 +101,7 @@ def main():
         for tt in tiers
     }
     cards = [
-        {"tier": mt, "name": name, "offered": k, "bought": CARD_BUY[(mt, name)]}
+        {"tier": mt, "name": name, "types": CARD_TYPES[(mt, name)], "offered": k, "bought": CARD_BUY[(mt, name)]}
         for (mt, name), k in sorted(CARD_OFFER.items(), key=lambda kv: -kv[1])
     ]
     result = {
@@ -97,12 +111,17 @@ def main():
         "curve": curriculum.label(opts.forced_curve),
         "cap": opts.max_steps_per_turn,
         "from_turn": FROM_TURN,
+        "tribes": cfg.tribes,
         "by_tier": table,
         "cards": cards,
+        "by_lobby_types": [
+            {"lobby": lobby, "minions": own, "tiers": tier, "offered": k, "bought": TYPE_BUY[(lobby, own, tier)]}
+            for (lobby, own, tier), k in sorted(TYPE_OFFER.items())
+        ],
     }
     with open(out, "w") as f:
         json.dump(result, f)
-    print(f"{NET} | {n} lobbies | curve {result['curve']} | cap {result['cap']}")
+    print(f"{NET} | {n} lobbies of {cfg.tribes} minion types | curve {result['curve']} | cap {result['cap']}")
     print("take rate (bought / offered) by the seat's Tavern Tier (rows) and the minion's Tier (columns)")
     print("tavern " + " ".join(f"{'T' + str(mt):>12}" for mt in tiers))
     for tt in tiers:
@@ -120,6 +139,16 @@ def main():
                 print("    ...")
                 continue
             print(f"    {100 * c['bought'] / c['offered']:5.1f}%  {c['offered']:>5}  T{c['tier']} {c['name']}")
+    if cfg.tribes and cfg.tribes <= 2:
+        print(f"take rate on turn {FROM_TURN} and later by the lobby's types: minions of the lobby's types (own) and typeless ones")
+        print(f"{'lobby':<22} {'own T1-4':>14} {'own T5-6':>14} {'typeless T1-4':>14} {'typeless T5-6':>14}")
+        for lobby in sorted({k[0] for k in TYPE_OFFER}):
+            cells = []
+            for own in ("own", "typeless"):
+                for tier in ("low", "high"):
+                    k = TYPE_OFFER[(lobby, own, tier)]
+                    cells.append(f"{100 * TYPE_BUY[(lobby, own, tier)] / k:6.1f}% {k:>6}" if k >= 30 else f"{'-':>14}")
+            print(f"{lobby:<22} " + " ".join(cells))
 
 
 if __name__ == "__main__":

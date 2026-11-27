@@ -631,7 +631,19 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **The school's gain shows more clearly here.** With only Mechs in the shop, run B's last network wins 6.3% against human boards on turn 13, and 49% against them at a tenth of their stats.
 - **In six types its boards are weak.** With only Beasts in the shop its median board holds 856 stats on turn 13, a quarter of its Mech board, and half its boards there are a typeless pile. The published human Beast board holds about 52,000.
 - **A one-type lobby is a place where those cards can pay.** Every seat is equally lost in a Beast lobby, so the first seat to make Beasts work wins it. That is the incentive the five-type lobby does not give, because Mechs, Dragons or Pirates are almost always on offer there.
-- **`train_lobby --school-tribes 1:0.5` plays half the training lobbies with one type** (the type school, `curriculum.py`). The check stays on the five-type ladder. It is built and tested and has not been run.
+- **`train_lobby --school-tribes 1:0.5` plays half the training lobbies with one type** (the type school, `curriculum.py`). The check stays on the five-type ladder.
+
+**In a one-type lobby the network does not buy the type** (`shoptake.py --tribes 1`, 150 lobbies on the curve, minions offered from turn 9 on in shops seen with 3 or more Gold). The seven weak types are Aberration, Beast, Demon, Elemental, Murloc, Quilboar and Undead:
+
+| Network | Minions of the lobby's type bought, weak types | Same, Tier 5 and 6 only | Same, Beast lobbies, Tier 5 and 6 | Minions of the lobby's type bought, Mech, Dragon and Pirate | Shop minions seen per lobby | Tier 5 and 6 cards never bought |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Run B, iteration 790 | 0.7% | 1.5% | 0.1% | 5.4% | 832 | 44 of 80 |
+| Run B, iteration 1800 | 1.6% | 3.7% | 0.5% | 4.9% | 695 | 43 of 78 |
+| Run D (type school), iteration 650 | 0.4% | 0.9% | 0.1% | 3.6% | 965 | 63 of 82 |
+
+- **With only Beasts in the shop, run B's last network buys 6 of the 1,135 Tier 5 and 6 Beasts it is shown** and none of 3,429 lower Beasts. It rolls, buys typeless minions at about 2%, and spends the rest on spells for the board it has.
+- **Its board is full by turn 8, so a new minion replaces a grown one.** A Tier 6 minion off the shelf holds fewer stats than a Tier 2 minion with four turns of buffs on it. It is worth the slot only as an engine, over turns the lobby does not last.
+- **Run D, the first type school run, is at its halfway mark and tries fewer of these cards, not more.** (`runs/school/d` on the Mac mini, from run B's last network, `--school-tribes 1:0.5`, otherwise as run B.) At iteration 650 its weak-type boards are 10% to 35% larger than run B's were at iteration 790, and it gets them by rolling more and buying less. Its checks on the five-type ladder are down to 0.7% against human boards. Run B gained only in its second half, so the last network decides.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
