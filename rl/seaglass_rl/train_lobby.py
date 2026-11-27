@@ -20,9 +20,13 @@ Each iteration:
    its expectation is the value. That equals the return only with gamma 1 and no shaping, so
    the trainer refuses a placement critic with either.
 3. **Every `--eval-every` iterations**: rate the learner on a ladder of rule bots (`--eval-ladder`,
-   default `fast`: `ladder.py`, 500 lobbies, with the per-turn probe), and save `latest.pt`.
-   `--eval-ladder heuristic` keeps the older, weaker check: alone against HeuristicBots
-   (`evaluate.py`).
+   default `fast`: `ladder.py`, 500 lobbies, with the per-turn probe and the human yardstick,
+   `yardstick.py`), and save `latest.pt`. `--eval-ladder heuristic` keeps the older, weaker check:
+   alone against HeuristicBots (`evaluate.py`).
+
+`--force-curve` is the "endgame school" scaffold (`curriculum.py`): the environment levels every
+model seat on a fixed curve, so the learner plays the late game it otherwise never visits.
+`--force-share` below 1 leaves some seats to level by themselves, to take the scaffold away again.
 
 The run directory holds `args.json`, `log.jsonl` (one line per iteration), `latest.pt`,
 `snapshots/iter_XXXXX.pt` and `evals/iter_XXXXX.json` (the full ladder results).
@@ -42,6 +46,7 @@ import torch
 
 from . import checkpoint
 from .behavior import behavior_stats, format_behavior
+from .curriculum import CURVES, parse_curve
 from .device import add_device_arg, cpu_state_dict, default_threads, default_workers, empty_cache, pick_device
 from . import ladder
 from .evaluate import evaluate, format_result
@@ -51,6 +56,7 @@ from .positioning import PositionSpec
 from .probe import ProbeSpec
 from .ppo import build_batch, ppo_update
 from .transformer import EntityTransformer
+from .yardstick import YardstickSpec
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -118,6 +124,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="pure self-play: no rule bots in training; the learner fills every seat until the first "
         "snapshot, then plays against its snapshots (evaluation still uses the rule bots)",
     )
+    p.add_argument(
+        "--force-curve",
+        default=None,
+        metavar="CURVE",
+        help="endgame school (curriculum.py): the environment takes the Tavern upgrade for every model seat that "
+        f"is below this leveling curve ({', '.join(CURVES)}, or turn:tier,turn:tier,...). The forced upgrades are "
+        "not the policy's decisions and are not trained on. A scaffold: not with --pure",
+    )
+    p.add_argument(
+        "--force-share",
+        type=float,
+        default=1.0,
+        help="with --force-curve: the chance that a model seat of a training game is on the curve (default 1: "
+        "every seat). Below 1, the evaluation plays with no curve",
+    )
     p.add_argument("--snapshot-every", type=int, default=10)
     p.add_argument("--pool-recent", type=int, default=4, help="the latest snapshots that are opponents every iteration")
     p.add_argument(
@@ -178,6 +199,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="turns ahead the auxiliary head predicts the board probe at (comma-separated; 0 is this turn's board)",
     )
     p.add_argument("--no-eval-probe", action="store_true", help="skip the per-turn board probe in ladder evaluations")
+    p.add_argument(
+        "--no-eval-yardstick", action="store_true", help="skip the fights against human winner boards in ladder evaluations"
+    )
     p.add_argument("--replays", action="store_true", help="save a few eval games as replays in RUN_DIR/replays/iter_XXXXX")
     p.add_argument("--seed", type=int, default=0)
     return p.parse_args(argv)
@@ -255,11 +279,26 @@ def lobby_config(args: argparse.Namespace) -> LobbyConfig:
     )
 
 
+def forced_curve(args: argparse.Namespace, training: bool) -> tuple[tuple[int, int], ...] | None:
+    """`--force-curve` as steps. In an evaluation (`training` False) the curve applies only when every
+    training seat is on it (`--force-share` 1): a learner that has to level by itself in training is
+    rated with no curve (`ladder.saved_curve` reads a checkpoint the same way)."""
+    share = getattr(args, "force_share", 1.0)
+    if getattr(args, "force_curve", None) is None or share <= 0 or (not training and share < 1.0):
+        return None
+    try:
+        return parse_curve(args.force_curve)
+    except ValueError as e:
+        raise SystemExit(f"--force-curve: {e}")
+
+
 def play_options(args: argparse.Namespace, deterministic: bool = False, aux: bool = False) -> PlayOptions:
     """The rollout rules of `args`. With `aux` (training rollouts only) and `--aux-coef > 0`, the
-    recorded seats also get the probe targets."""
+    recorded seats also get the probe targets; the forced curve of a training rollout is the one of
+    `--force-curve`, and an evaluation's is `forced_curve(args, training=False)`."""
     horizons = aux_horizons(args) if aux else ()
     return PlayOptions(
+        forced_curve=forced_curve(args, training=aux),
         # Its own reference boards (another seed), so the ladder's probe stays an independent check.
         aux_probe=ProbeSpec(seed=32_000_000) if horizons else None,
         aux_horizons=horizons or (0, 2, 4),
@@ -294,12 +333,16 @@ def make_specs(
     p_bot: float,
     rng: random.Random,
     seed: int,
+    force_share: float = 1.0,
 ) -> list[GameSpec]:
     """The iteration's games: the learner in `learner_units` random units, the league in the rest.
     Each opponent seat is a rule bot from `bots` (uniformly) with chance `p_bot`, or a snapshot from
     `opponents`; with no snapshot yet it is always a bot. With no snapshot and no bots (`p_bot` 0
-    or `bots` empty), the learner fills every unit."""
+    or `bots` empty), the learner fills every unit. With `force_share` below 1, each unit is left
+    off the forced curve (`GameSpec.unforced_units`) with chance `1 - force_share`."""
     specs = []
+    # Its own stream, so the seating is the same with and without a curve.
+    force_rng = random.Random(seed * 31 + 7)
     for g in range(games):
         controllers = []
         everyone = not opponents and (p_bot <= 0 or not bots)
@@ -311,7 +354,8 @@ def make_specs(
                 controllers.append(rng.choice(bots))
             else:
                 controllers.append(rng.choice(opponents))
-        specs.append(GameSpec(seed=seed + g, controllers=controllers))
+        unforced = () if force_share >= 1.0 else tuple(u for u in range(config.units) if force_rng.random() >= force_share)
+        specs.append(GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced))
     return specs
 
 
@@ -345,6 +389,12 @@ def main(argv: list[str] | None = None) -> None:
     if args.pure and (args.auto_position or args.aux_coef > 0):
         # Both score boards against a probe library of the rule bots' boards: hand-written play.
         raise SystemExit("--pure trains on no rule bots' play: no --auto-position and no --aux-coef")
+    if args.pure and args.force_curve is not None:
+        # The curve is a hand-written leveling rule (`curriculum.py`).
+        raise SystemExit("--pure trains with no hand-written play rule: no --force-curve")
+    if not 0.0 <= args.force_share <= 1.0:
+        raise SystemExit("--force-share is a chance: 0..1")
+    forced_curve(args, training=True)  # a bad --force-curve stops here, before the workers start
 
     start = 0
     if args.resume:
@@ -402,7 +452,15 @@ def main(argv: list[str] | None = None) -> None:
                     g["lr"] = args.lr * frac
             opponents = opponent_set(pool, args.pool_recent, args.pool_history, rng)
             specs = make_specs(
-                config, args.games, learner_units, opponents, bots, args.p_bot, rng, seed=args.seed * 10_000_019 + it * 1000
+                config,
+                args.games,
+                learner_units,
+                opponents,
+                bots,
+                args.p_bot,
+                rng,
+                seed=args.seed * 10_000_019 + it * 1000,
+                force_share=args.force_share if args.force_curve is not None else 1.0,
             )
             source = (dict(model.config), cpu_state_dict(model))
             sources: dict[str, Any] = {LEARNER: source}
@@ -467,6 +525,7 @@ def main(argv: list[str] | None = None) -> None:
                         player=player,
                         options=play_options(args),
                         probe=None if args.no_eval_probe else ProbeSpec(),
+                        yardstick=None if args.no_eval_yardstick else YardstickSpec(),
                         replay_dir=replays,
                     )
                     (run / "evals").mkdir(exist_ok=True)
@@ -477,6 +536,10 @@ def main(argv: list[str] | None = None) -> None:
                         "agent": res["agent"],
                         "tier": {t: e["tier"] for t, e in res["by_turn"]["agent"].items()},
                         "probe": {t: e["probe"] for t, e in res["by_turn"]["agent"].items() if "probe" in e},
+                        "stats": {t: e["stats"] for t, e in res["by_turn"]["agent"].items()},
+                        "high": {t: e["high"] for t, e in res["by_turn"]["agent"].items()},
+                        "human": ladder.human_summary(res),
+                        "final_types": res["behavior"]["agent"]["final_types"],
                     }
                     print("  " + ladder.format_summary(res), flush=True)
                 row["behavior"] = behavior_stats(trajs)

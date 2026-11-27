@@ -1,0 +1,132 @@
+{
+ "name": "hspulse-2026-11",
+ "patch": "37.0.2",
+ "source": "https://hspulse.net/bg/comps",
+ "retrieved": "2026-11-27",
+ "notes": [
+  "The example winner board of each of 13 comps on the page, one board per comp, from turns 12 to 15.",
+  "Stats are as the page prints them: abbreviated values such as 1K are taken as 1000, a lower bound.",
+  "The page lists no keywords beyond each card's own, and no trinkets or Hero Powers, which understates the boards.",
+  "They are showcase winners, which overstates a typical top-four board.",
+  "A null card is a minion the engine's catalog does not have: it is built as a plain minion of the given type and Tavern Tier."
+ ],
+ "boards": [
+  {"comp": "Mech APM", "turn": 14, "minions": [
+   {"card": "Leeroy the Reckless", "attack": 22, "health": 20},
+   {"card": "Spark Snapper", "attack": 1000, "health": 1000, "golden": true},
+   {"card": "Auto Reveille", "attack": 2000, "health": 2000, "golden": true},
+   {"card": "Auto Reveille", "attack": 3000, "health": 3000, "golden": true},
+   {"card": "Auto Reveille", "attack": 1000, "health": 1000},
+   {"card": "Polarizing Beatboxer", "attack": 78000, "health": 76000, "golden": true},
+   {"card": "Stitched Salvager", "attack": 16, "health": 4}
+  ]},
+  {"comp": "Elemental Azerite", "turn": 13, "minions": [
+   {"card": "Leyline Surfacer", "attack": 939, "health": 985},
+   {"card": "Living Azerite", "attack": 27000, "health": 27000, "golden": true},
+   {"card": "Brann Bronzebeard", "attack": 894, "health": 943, "golden": true},
+   {"card": "Bubble Gunner", "attack": 2, "health": 3},
+   {"card": "Diremuck Forager", "attack": 145, "health": 141, "golden": true},
+   {"card": "Balinda Stonehearth", "attack": 273, "health": 291, "golden": true},
+   {"card": "Diremuck Forager", "attack": 56, "health": 73, "golden": true}
+  ]},
+  {"comp": "Undead APM", "turn": 14, "minions": [
+   {"card": "Sin'dorei Straight Shot", "attack": 12, "health": 10},
+   {"card": "Dead Bellringer", "attack": 1000, "health": 50, "golden": true},
+   {"card": "Handless Forsaken", "attack": 1000, "health": 7},
+   {"card": "Snazzy Phantom", "attack": 1000, "health": 32, "golden": true},
+   {"card": "Handless Forsaken", "attack": 2000, "health": 14},
+   {"card": "Forsaken Weaver", "attack": 19000, "health": 18000, "golden": true},
+   {"card": "Snazzy Phantom", "attack": 17000, "health": 16000, "golden": true}
+  ]},
+  {"comp": "Beast Lobster", "turn": 13, "minions": [
+   {"card": "Sin'dorei Straight Shot", "attack": 3, "health": 4},
+   {"card": "Headhunter Gryphon", "attack": 10000, "health": 5000, "golden": true},
+   {"card": "Tasty Lobster", "attack": 9000, "health": 4000, "golden": true},
+   {"card": "Deathstrider", "attack": 14000, "health": 7000},
+   {"card": "Deathstrider", "attack": 2000, "health": 1000},
+   {"card": "Titus Rivendare", "attack": 2, "health": 14, "golden": true},
+   {"card": "Titus Rivendare", "attack": 2, "health": 14, "golden": true}
+  ]},
+  {"comp": "Quilboar Felboar Spam", "turn": 15, "minions": [
+   {"card": "Obsidian Ravager", "attack": 585, "health": 433},
+   {"card": "Felboar", "attack": 21000, "health": 13000, "golden": true},
+   {"card": "Felboar", "attack": 7000, "health": 5000},
+   {"card": "Enterprising Escapee", "attack": 2000, "health": 1000, "golden": true},
+   {"card": "Proud Privateer", "attack": 1000, "health": 1000},
+   {"card": "Highkeeper Ra", "attack": 13, "health": 7},
+   {"card": "Sky Admiral Rogers", "attack": 2000, "health": 2000, "golden": true}
+  ]},
+  {"comp": "Dragon Shield", "turn": 14, "minions": [
+   {"card": "Crimson Vindicator", "attack": 627, "health": 322},
+   {"card": "Heroic Broodmother", "attack": 592, "health": 389},
+   {"card": "Persistent Poet", "attack": 2000, "health": 1000, "golden": true},
+   {"card": "Persistent Poet", "attack": 1000, "health": 1000, "golden": true},
+   {"card": "Hopebringer", "attack": 1000, "health": 1000, "golden": true},
+   {"card": "Nadina the Red", "attack": 191, "health": 92, "golden": true},
+   {"card": "Bronze Warden", "attack": 138, "health": 75}
+  ]},
+  {"comp": "Murloc Scam", "turn": 15, "minions": [
+   {"card": "Dark Paradox", "attack": 179, "health": 186},
+   {"card": "Bile Spitter", "attack": 121, "health": 125},
+   {"card": "Diremuck Forager", "attack": 429, "health": 300, "golden": true},
+   {"card": "Choral Mrrrglr", "attack": 7, "health": 8},
+   {"card": null, "tribe": "murloc", "tier": 5, "attack": 176, "health": 171},
+   {"card": "Leeroy the Reckless", "attack": 636, "health": 333},
+   {"card": "Leeroy the Reckless", "attack": 11, "health": 10}
+  ]},
+  {"comp": "Murloc End Of Turn", "turn": 15, "minions": [
+   {"card": "Leeroy the Reckless", "attack": 396, "health": 424},
+   {"card": "Felfire Conjurer", "attack": 1000, "health": 1000},
+   {"card": null, "tribe": "murloc", "tier": 5, "attack": 858, "health": 855},
+   {"card": "Young Murk-Eye", "attack": 664, "health": 661},
+   {"card": "Glambot", "attack": 21000, "health": 26000, "golden": true},
+   {"card": "Drakkari Enchanter", "attack": 891, "health": 896, "golden": true},
+   {"card": "Brann Bronzebeard", "attack": 929, "health": 930, "golden": true}
+  ]},
+  {"comp": "Neutral Tea Set", "turn": 12, "minions": [
+   {"card": "Boom-in-a-Box", "attack": 5, "health": 10},
+   {"card": "Gatekeeper Amalgam", "attack": 2000, "health": 3000, "golden": true},
+   {"card": "Heroic Broodmother", "attack": 1000, "health": 2000},
+   {"card": "Crackling Cyclone", "attack": 1000, "health": 2000},
+   {"card": "N'raqi Frostcaller", "attack": 1000, "health": 1000},
+   {"card": "Hot-Air Surveyor", "attack": 650, "health": 1000},
+   {"card": "Hot-Air Surveyor", "attack": 654, "health": 1000}
+  ]},
+  {"comp": "Demon Boost Shop", "turn": 15, "minions": [
+   {"card": "Bile Spitter", "attack": 351, "health": 534},
+   {"card": "Felboar", "attack": 8000, "health": 11000},
+   {"card": "Leeroy the Reckless", "attack": 214, "health": 287},
+   {"card": "Felboar", "attack": 12000, "health": 16000},
+   {"card": "Devilish Distractor", "attack": 1000, "health": 1000},
+   {"card": "Balinda Stonehearth", "attack": 261, "health": 355},
+   {"card": "Hot-Air Surveyor", "attack": 16, "health": 25, "golden": true}
+  ]},
+  {"comp": "Dragon Spell Power", "turn": 13, "minions": [
+   {"card": "Crimson Vindicator", "attack": 614, "health": 790, "golden": true},
+   {"card": "Bronze Timewalker", "attack": 1000, "health": 1000, "golden": true},
+   {"card": "Persistent Poet", "attack": 889, "health": 1000, "golden": true},
+   {"card": "Felfire Conjurer", "attack": 1000, "health": 1000, "golden": true},
+   {"card": "Runic Arcanist", "attack": 1000, "health": 2000, "golden": true},
+   {"card": "Sky-hatch Runaway", "attack": 903, "health": 1000, "golden": true},
+   {"card": "Drakkari Enchanter", "attack": 617, "health": 739}
+  ]},
+  {"comp": "Aberration Discard", "turn": 13, "minions": [
+   {"card": "De-volition-ist", "attack": 2000, "health": 2000, "golden": true},
+   {"card": "De-volition-ist", "attack": 192, "health": 358, "golden": true},
+   {"card": "Brann Bronzebeard", "attack": 404, "health": 1000, "golden": true},
+   {"card": "Mysterious K'Thir", "attack": 897, "health": 1000, "golden": true},
+   {"card": "Parasitic Fleshling", "attack": 452, "health": 1000, "golden": true},
+   {"card": "Drakkari Enchanter", "attack": 576, "health": 1000, "golden": true},
+   {"card": "Elite Navigator", "attack": 185, "health": 329}
+  ]},
+  {"comp": "Mech Volumizer", "turn": 12, "minions": [
+   {"card": "Conveyor Construct", "attack": 15, "health": 10},
+   {"card": "Polarizing Beatboxer", "attack": 18000, "health": 19000},
+   {"card": "Drone Duplicator", "attack": 8000, "health": 8000},
+   {"card": "Spark Snapper", "attack": 286, "health": 301, "golden": true},
+   {"card": "Auto Reveille", "attack": 637, "health": 783},
+   {"card": "Auto Reveille", "attack": 466, "health": 585},
+   {"card": "Green Volumizer", "attack": 270, "health": 315}
+  ]}
+ ]
+}
