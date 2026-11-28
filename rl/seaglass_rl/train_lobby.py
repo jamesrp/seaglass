@@ -56,7 +56,7 @@ from .device import add_device_arg, cpu_state_dict, default_threads, default_wor
 from . import ladder
 from .evaluate import evaluate, format_result
 from .model import BattlegroundsMLP
-from .play import BOTS, LobbyConfig, LEARNER, SCHOOL_BUYS, GameSpec, Player, PlayOptions
+from .play import BOTS, LobbyConfig, LEARNER, SCHOOL_BUYS, GameSpec, LostPlay, Player, PlayOptions
 from .positioning import PositionSpec
 from .probe import ProbeSpec
 from .ppo import build_batch, ppo_update
@@ -105,6 +105,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         metavar="HOURS",
         help="stop after the first iteration that ends past this many hours, with a final save and evaluation",
+    )
+    p.add_argument(
+        "--max-lost-plays",
+        type=int,
+        default=3,
+        help="how many plays the run may lose to a crash (an engine panic, a dead worker) before it stops: "
+        "a lost iteration is played again on other seeds, a lost check is skipped (0: stop at the first)",
     )
     p.add_argument("--games", type=int, default=64, help="lobbies per iteration")
     p.add_argument(
@@ -303,6 +310,15 @@ def lobby_config(args: argparse.Namespace) -> LobbyConfig:
         damage_caps=not args.no_damage_caps,
         tribes=args.tribes,
     )
+
+
+def lose_play(lost: int, limit: int, what: str, error: Exception) -> int:
+    """Count a play lost to a crash (`play.LostPlay`) and say so; past `limit` of them the run stops."""
+    lost += 1
+    print(f"lost play {lost} (the run stops past {limit}): {what}: {error}", flush=True)
+    if lost > limit:
+        raise SystemExit(f"{lost} plays were lost to crashes (--max-lost-plays {limit}): the run stops")
+    return lost
 
 
 def type_mix(args: argparse.Namespace) -> TypeMix:
@@ -504,6 +520,7 @@ def main(argv: list[str] | None = None) -> None:
     print("  HeuristicBot behavior (reference):\n" + format_behavior(
         behavior_stats([t for r in reference for t in r.trajectories])), flush=True)
     t_start = time.time()
+    lost_plays = 0
     try:
         for it in range(start + 1, start + args.iterations + 1):
             t0 = time.time()
@@ -512,24 +529,32 @@ def main(argv: list[str] | None = None) -> None:
                 for g in optimizer.param_groups:
                     g["lr"] = args.lr * frac
             opponents = opponent_set(pool, args.pool_recent, args.pool_history, rng)
-            specs = make_specs(
-                config,
-                args.games,
-                learner_units,
-                opponents,
-                bots,
-                args.p_bot,
-                rng,
-                seed=args.seed * 10_000_019 + it * 1000,
-                force_share=args.force_share if args.force_curve is not None else 1.0,
-                type_mix=mix,
-                buys_share=args.school_buys_share,
-            )
             source = (dict(model.config), cpu_state_dict(model))
-            sources: dict[str, Any] = {LEARNER: source}
-            used = {c for spec in specs for c in spec.controllers}
-            sources.update({p: p for p in opponents if p in used})
-            results = player.play(config, specs, sources, play_options(args, aux=True), seed=it)
+            attempt = 0
+            while True:
+                specs = make_specs(
+                    config,
+                    args.games,
+                    learner_units,
+                    opponents,
+                    bots,
+                    args.p_bot,
+                    rng,
+                    # A play lost to a crash is played again on other seeds.
+                    seed=args.seed * 10_000_019 + it * 1000 + 500 * attempt,
+                    force_share=args.force_share if args.force_curve is not None else 1.0,
+                    type_mix=mix,
+                    buys_share=args.school_buys_share,
+                )
+                sources: dict[str, Any] = {LEARNER: source}
+                used = {c for spec in specs for c in spec.controllers}
+                sources.update({p: p for p in opponents if p in used})
+                try:
+                    results = player.play(config, specs, sources, play_options(args, aux=True), seed=it)
+                    break
+                except LostPlay as e:
+                    lost_plays = lose_play(lost_plays, args.max_lost_plays, f"iteration {it}", e)
+                    attempt += 1
             t_play = time.time() - t0
             trajs = [t for r in results for t in r.trajectories]
             batch = build_batch(trajs, args.gamma, args.lam, args.lam_per)
@@ -582,17 +607,26 @@ def main(argv: list[str] | None = None) -> None:
                     row["eval_vs_heuristic"] = res
                     print("  " + format_result(f"eval iter {it}", res), flush=True)
                 else:
-                    res = ladder.rate(
-                        (dict(model.config), cpu_state_dict(model)),
-                        ladder=args.eval_ladder,
-                        games=args.eval_games,
-                        config=config,
-                        player=player,
-                        options=play_options(args),
-                        probe=None if args.no_eval_probe else ProbeSpec(),
-                        yardstick=None if args.no_eval_yardstick else YardstickSpec(),
-                        replay_dir=replays,
-                    )
+                    try:
+                        res = ladder.rate(
+                            (dict(model.config), cpu_state_dict(model)),
+                            ladder=args.eval_ladder,
+                            games=args.eval_games,
+                            config=config,
+                            player=player,
+                            options=play_options(args),
+                            probe=None if args.no_eval_probe else ProbeSpec(),
+                            yardstick=None if args.no_eval_yardstick else YardstickSpec(),
+                            replay_dir=replays,
+                        )
+                    except BaseException as e:
+                        # A crash in the check's lobbies, or an engine panic in the yardstick's fights
+                        # (not an `Exception`). The check is skipped: its seeds would crash again.
+                        if not isinstance(e, LostPlay) and type(e).__name__ != "PanicException":
+                            raise
+                        lost_plays = lose_play(lost_plays, args.max_lost_plays, f"the check of iteration {it}", e)
+                        res = None
+                if args.eval_ladder != "heuristic" and res is not None:
                     (run / "evals").mkdir(exist_ok=True)
                     (run / "evals" / f"iter_{it:05d}.json").write_text(json.dumps(res))
                     row["eval"] = {

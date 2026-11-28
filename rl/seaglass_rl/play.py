@@ -1021,10 +1021,23 @@ def _model_from(name: str, source: Any, seed: int) -> BattlegroundsMLP:
     return model
 
 
+class LostPlay(RuntimeError):
+    """A play that a crash ended (the engine panicked, or a worker process died): its games are
+    lost, and the `Player` can play again. `train_lobby` replays the iteration on other seeds."""
+
+
 def _play_chunk(job: tuple) -> list[GameResult]:
     config, specs, sources, options, record, seed = job
     models = {name: _model_from(name, src, seed + i) for i, (name, src) in enumerate(sources.items())}
-    return play_games(config, specs, models, options, record)
+    try:
+        return play_games(config, specs, models, options, record)
+    except BaseException as e:
+        # A Rust panic reaches Python as `pyo3_runtime.PanicException`, which is not an `Exception`:
+        # left alone it ends the worker process. The engine prints where it panicked.
+        if type(e).__name__ != "PanicException":
+            raise
+        seeds = ", ".join(str(spec.seed) for spec in specs)
+        raise LostPlay(f"the engine panicked ({e}) in one of the lobbies of seeds {seeds}") from None
 
 
 class Player:
@@ -1038,19 +1051,22 @@ class Player:
         self.workers = workers
         self.pool = None
         if workers > 0:
-            # One BLAS/OpenMP thread per worker: the workers' small matrix products would otherwise
-            # oversubscribe the cores many times over. A spawned worker reads these before it
-            # loads numpy and torch (a forked one would inherit the parent's thread pools).
-            saved = {k: os.environ.get(k) for k in _THREAD_VARS}
-            os.environ.update({k: "1" for k in _THREAD_VARS})
-            try:
-                self.pool = mp.get_context("spawn").Pool(workers, initializer=_init_worker)
-            finally:
-                for k, v in saved.items():
-                    if v is None:
-                        os.environ.pop(k, None)
-                    else:
-                        os.environ[k] = v
+            self._start_pool()
+
+    def _start_pool(self) -> None:
+        # One BLAS/OpenMP thread per worker: the workers' small matrix products would otherwise
+        # oversubscribe the cores many times over. A spawned worker reads these before it
+        # loads numpy and torch (a forked one would inherit the parent's thread pools).
+        saved = {k: os.environ.get(k) for k in _THREAD_VARS}
+        os.environ.update({k: "1" for k in _THREAD_VARS})
+        try:
+            self.pool = mp.get_context("spawn").Pool(self.workers, initializer=_init_worker)
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
 
     def play(
         self,
@@ -1080,11 +1096,12 @@ class Player:
         return results
 
     def _map(self, jobs: list[tuple]) -> list[list[GameResult]]:
-        """`pool.map(_play_chunk, jobs)`, except that a worker that dies is an error.
+        """`pool.map(_play_chunk, jobs)`, except that a worker that dies is an error (`LostPlay`).
 
         `multiprocessing.Pool` replaces a worker that died (killed for memory, or a crash in native
         code) and then waits for the lost task forever, so a run would hang with nothing in its log.
-        The workers are never retired, so one missing from the pool has died."""
+        The workers are never retired, so one missing from the pool has died. The pool is started
+        again, so the player can go on."""
         workers = {w.pid for w in self.pool._pool}
         pending = self.pool.map_async(_play_chunk, jobs)
         while True:
@@ -1094,8 +1111,8 @@ class Player:
                 gone = workers - {w.pid for w in self.pool._pool}
                 if gone:
                     self.pool.terminate()
-                    self.pool = None
-                    raise RuntimeError(
+                    self._start_pool()
+                    raise LostPlay(
                         f"worker process {sorted(gone)[0]} died while playing games (killed for memory, or a "
                         "crash in the engine): its games are lost, so this play is stopped"
                     ) from None
