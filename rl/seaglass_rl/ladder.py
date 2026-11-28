@@ -23,6 +23,16 @@ example the same checkpoint with and without search. 4.5 is level.
 Besides placement, a result reports the agent's behavior by turn (Tavern Tier, Gold left, actions)
 and its probe score by turn (`probe.py`): the win rate of its end-of-turn board against reference
 boards from the same turn.
+
+Placement and the probe are relative to the field. The human yardstick (`yardstick.py`) is the
+absolute mark: the win rate of the agent's boards on turns 10 to 16 against a fixed set of human
+winner boards, at the published stats and at a tenth of them. A result also reports the style
+behind the number: the board's total stats and its Tier 5 and 6 minions by turn, and the minion
+types of the agent's last boards.
+
+A checkpoint trained on a forced leveling curve (`curriculum.py`, `train_lobby --force-curve`) is
+rated on that curve (`--force-curve checkpoint`, the default). `--force-curve off` rates it with no
+curve, which is the only rating that says whether it levels by itself.
 """
 
 from __future__ import annotations
@@ -42,11 +52,14 @@ from typing import Any
 
 import numpy as np
 
+from .curriculum import label as curve_label
+from .curriculum import parse_curve
 from .device import default_workers
 from .positioning import PositionSpec
 from .play import BOTS, GameSpec, LobbyConfig, Player, PlayOptions
 from .probe import ProbeSpec, library_for, library_summary
 from .search import SearchSpec
+from .yardstick import YardstickSpec
 
 AGENT = "agent"
 KINDS = (
@@ -59,8 +72,12 @@ KINDS = (
     "toggle_freeze",
     "hero_power",
     "choose_discover",
+    "forced_upgrade",
 )
 TIER_TURNS = (3, 5, 7, 9, 11)
+# The turns of the yardstick's headline numbers (`format_summary`); the gate is `HUMAN_GATE_TURN`.
+HUMAN_TURNS = (10, 12, 14)
+HUMAN_GATE_TURN = 13
 
 
 @dataclasses.dataclass(frozen=True)
@@ -120,10 +137,20 @@ def _saved_step_cap(args: dict) -> int | None:
     return None if cap is None else int(cap)
 
 
+def saved_curve(args: dict) -> tuple[tuple[int, int], ...] | None:
+    """The forced curve a checkpoint is rated on: the one it was trained on when every model seat
+    was forced (`--force-share` 1), else none. A checkpoint trained with only some seats forced has
+    to level by itself, so it is rated with no curve."""
+    if float(args.get("force_share", 1.0) or 0.0) < 1.0:
+        return None
+    return parse_curve(args.get("force_curve"))
+
+
 def checkpoint_options(agent: Any) -> PlayOptions:
     """The move rules a checkpoint was trained with (`train_lobby.play_options`: the step cap, the
-    end-of-turn step, Reposition, Freeze, pruning), so it is rated under the same rules. Defaults for
-    a bot, a `(config, state_dict)` pair, or a checkpoint saved without its training arguments."""
+    end-of-turn step, Reposition, Freeze, pruning, the forced curve), so it is rated under the same
+    rules. Defaults for a bot, a `(config, state_dict)` pair, or a checkpoint saved without its
+    training arguments."""
     if not isinstance(agent, str) or agent in BOTS or not os.path.isfile(agent):
         return PlayOptions()
     from . import checkpoint
@@ -137,6 +164,7 @@ def checkpoint_options(agent: Any) -> PlayOptions:
         allow_freeze=not a.get("no_freeze", False),
         prune_dominated=bool(a.get("prune", False)),
         auto_position=PositionSpec() if a.get("auto_position", False) else None,
+        forced_curve=saved_curve(a),
     )
 
 
@@ -235,7 +263,8 @@ def _place_stats(per_lobby: list[list[int]]) -> dict[str, Any]:
 
 
 def _turn_table(seats: list[list[Any]], with_probe: bool) -> dict[int, dict[str, Any]]:
-    """Per-turn means over a group's seats; `seats` is one list of `TurnStat` per seat-game."""
+    """Per-turn means over a group's seats; `seats` is one list of `TurnStat` per seat-game. The
+    board's total stats are heavy-tailed, so they are reported as a median."""
     by_turn: dict[int, list[Any]] = {}
     for stats in seats:
         for s in stats:
@@ -257,22 +286,33 @@ def _turn_table(seats: list[list[Any]], with_probe: bool) -> dict[int, dict[str,
             "board": float(np.mean([r.board for r in rows])),
             "actions": float(np.mean([sum(r.actions.values()) for r in rows])),
             "kinds": kinds,
+            "stats": float(np.median([r.stats for r in rows])),
+            "high": float(np.mean([r.high for r in rows])),
         }
         if with_probe:
             vals = [r.probe for r in rows if r.probe is not None]
             if vals:
                 entry["probe"] = float(np.mean(vals))
                 entry["probe_se"] = float(np.std(vals) / math.sqrt(len(vals)))
+            human = [r.yardstick for r in rows if r.yardstick is not None]
+            if human:
+                # One mean per scale of the yardstick (`meta.yardstick.scales`).
+                entry["human"] = [float(x) for x in np.mean(np.asarray(human, dtype=np.float64), axis=0)]
+                entry["human_n"] = len(human)
         table[turn] = entry
     return table
 
 
 def _behavior(seats: list[list[Any]], table: dict[int, dict[str, Any]]) -> dict[str, Any]:
     rows = [s for stats in seats for s in stats]
+    # The minion type of each seat's last board (`play.board_type`; "none": no type has 4 minions).
+    last = [stats[-1].type or "none" for stats in seats if stats]
+    types = {t: last.count(t) / len(last) for t in sorted(set(last), key=lambda t: (-last.count(t), t))}
     return {
         "tier_at": {t: table[t]["tier"] if t in table else None for t in TIER_TURNS},
         "gold_left": float(np.mean([r.gold_left for r in rows])) if rows else None,
         "actions_per_turn": float(np.mean([sum(r.actions.values()) for r in rows])) if rows else None,
+        "final_types": types,
     }
 
 
@@ -289,10 +329,13 @@ def rate(
     replay_dir: str | None = None,
     max_replays: int = 4,
     search: SearchSpec | None = None,
+    yardstick: YardstickSpec | None = YardstickSpec(),
 ) -> dict[str, Any]:
     """Rate `agent` (a bot name, a checkpoint path or a `(model_config, state_dict)` pair) on the
     named ladder. Returns a JSON-serializable result (see the module docstring and `format_report`).
-    With `search`, the agent's model seats search inside their turns (`search.py`); a bot can't."""
+    With `search`, the agent's model seats search inside their turns (`search.py`); a bot can't.
+    With `yardstick`, the agent's boards are also scored against human winner boards
+    (`yardstick.py`). `options.forced_curve` puts the agent's model seats on a forced curve."""
     lad = LADDERS[ladder]
     config = config or LobbyConfig()
     if config.duos or config.players != 8:
@@ -308,10 +351,10 @@ def rate(
         controller = AGENT
         sources[AGENT] = agent
         agent_label = "<state_dict>" if isinstance(agent, (tuple, list)) else str(agent)
-    pairs = ladder_specs(lad, games, seed, controller, probe is not None)
+    pairs = ladder_specs(lad, games, seed, controller, probe is not None or yardstick is not None)
     specs = [s for s, _ in pairs]
     agent_units = {s.seed: u for s, u in pairs}
-    options = dataclasses.replace(options or PlayOptions(), turn_stats=True, probe=probe)
+    options = dataclasses.replace(options or PlayOptions(), turn_stats=True, probe=probe, yardstick=yardstick)
     if replay_dir:
         options = dataclasses.replace(options, keep_replays=True)
     if search is not None:
@@ -368,6 +411,8 @@ def rate(
             "search": dataclasses.asdict(search) if search is not None else None,
             "probe": dataclasses.asdict(probe) if probe is not None else None,
             "probe_library": library_summary(library_for(probe, config)) if probe is not None else None,
+            "yardstick": dataclasses.asdict(yardstick) if yardstick is not None else None,
+            "forced_curve": curve_label(options.forced_curve) if options.forced_curve and controller == AGENT else None,
             "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "seconds": round(time.time() - t0, 1),
         },
@@ -403,13 +448,20 @@ def _search_label(s: dict[str, Any]) -> str:
     return f"search m={s['top_m']} sims={s['sims']} T={s['temperature']}" + (" gumbel" if s["gumbel_noise"] else "")
 
 
+def _human_labels(meta: dict[str, Any]) -> list[str]:
+    """The column labels of the yardstick's scales: "human" at the published stats, else "h@10%"."""
+    spec = meta.get("yardstick") or {}
+    return ["human" if s == 1 else f"h@{s:.0%}" for s in spec.get("scales", ())]
+
+
 def format_report(res: dict[str, Any]) -> str:
     meta = res["meta"]
     commit = (meta["commit"] or "?")[:8] + (" (dirty)" if meta.get("dirty") else "")
     lines = [
         f"{meta['ladder']} ladder | {meta['agent']} | {meta['games']} lobbies | seed {meta['seed']} | "
         f"commit {commit} | engine {meta['engine'] or '?'} | {meta['seconds']:.0f}s"
-        + (f" | {_search_label(meta['search'])}" if meta.get("search") else ""),
+        + (f" | {_search_label(meta['search'])}" if meta.get("search") else "")
+        + (f" | forced curve: {meta['forced_curve']}" if meta.get("forced_curve") else ""),
         _line("agent", res["agent"]),
     ]
     for name, s in res["anchors"].items():
@@ -418,7 +470,15 @@ def format_report(res: dict[str, Any]) -> str:
     agent = tables[AGENT]
     anchors = [t for k, t in tables.items() if k != AGENT]
     has_probe = any("probe" in e for e in agent.values())
-    lines.append("turn alive  tier  gold health board  acts buys rolls lvls" + ("  probe" if has_probe else "") + "  | anchors' tier")
+    has_style = any("stats" in e for e in agent.values())
+    humans = _human_labels(meta) if any("human" in e for e in agent.values()) else []
+    lines.append(
+        "turn alive  tier  gold health board  acts buys rolls lvls"
+        + ("   stats  t5+" if has_style else "")
+        + ("  probe" if has_probe else "")
+        + "".join(f" {h:>6}" for h in humans)
+        + "  | anchors' tier"
+    )
 
     def row(label: str, entries: list[dict[str, Any]], anc: list[dict[str, Any]]) -> str:
         n_all = sum(e["n"] for e in entries)
@@ -426,12 +486,21 @@ def format_report(res: dict[str, Any]) -> str:
         probe = ""
         if has_probe:
             probe = f"  {_mean(probes, 'probe'):5.2f}" if probes else "      -"
+        style = ""
+        if has_style:
+            styled = [e for e in entries if "stats" in e]
+            style = f" {_mean(styled, 'stats'):7,.0f} {_mean(styled, 'high'):4.1f}" if styled else "       -    -"
+        human = ""
+        scored = [e for e in entries if "human" in e]
+        for i in range(len(humans)):
+            w = sum(e["human_n"] for e in scored)
+            human += f" {sum(e['human'][i] * e['human_n'] for e in scored) / w:6.1%}" if w else "      -"
         alive = max(e["alive"] for e in entries)
-        kinds = lambda k: sum(e["kinds"][k] * e["n"] for e in entries) / n_all  # noqa: E731
+        kinds = lambda k: sum(e["kinds"].get(k, 0.0) * e["n"] for e in entries) / n_all  # noqa: E731
         return (
             f"{label:>4} {alive:4.0%} {_mean(entries, 'tier'):5.1f} {_mean(entries, 'gold_left'):5.1f} "
             f"{_mean(entries, 'health'):6.1f} {_mean(entries, 'board'):5.1f} {_mean(entries, 'actions'):5.1f} "
-            f"{kinds('buy'):4.1f} {kinds('refresh'):5.1f} {kinds('upgrade_tavern'):4.1f}{probe}  | "
+            f"{kinds('buy'):4.1f} {kinds('refresh'):5.1f} {kinds('upgrade_tavern'):4.1f}{style}{probe}{human}  | "
             + (f"{_mean(anc, 'tier'):.1f}" if anc else "-")
         )
 
@@ -443,7 +512,35 @@ def format_report(res: dict[str, Any]) -> str:
         lines.append(
             row("16+", [agent[t] for t in later], [a[t] for a in anchors for t in a if t > 15])
         )
+    if has_style:
+        lines.append("stats: the board's total Attack + Health (median) | t5+: Tier 5 and 6 minions on the board | lvls: the agent's own upgrades")
+    if humans:
+        spec = meta["yardstick"]
+        lines.append(
+            f"human: win rate against the {spec['name']} winner boards (yardstick.py), at the published stats"
+            + (f" and at {', '.join(f'{s:.0%}' for s in spec['scales'] if s != 1)} of them" if len(humans) > 1 else "")
+        )
+    types = (res.get("behavior", {}).get(AGENT) or {}).get("final_types")
+    if types:
+        lines.append("last boards by minion type: " + " | ".join(f"{t} {share:.0%}" for t, share in types.items()))
     return "\n".join(lines)
+
+
+def human_summary(res: dict[str, Any]) -> dict[str, Any] | None:
+    """The yardstick's headline numbers of a rating: the win rate at the published stats on the gate
+    turn (`HUMAN_GATE_TURN`) and on `HUMAN_TURNS`, and the same at each other scale. None when the
+    rating has no yardstick or the agent's games ended before its turns."""
+    spec = res["meta"].get("yardstick")
+    table = _turns(res["by_turn"][AGENT])
+    if not spec or not any("human" in e for e in table.values()):
+        return None
+    out: dict[str, Any] = {"name": spec["name"], "scales": list(spec["scales"]), "gate_turn": HUMAN_GATE_TURN, "by_turn": {}}
+    for t in sorted({HUMAN_GATE_TURN, *HUMAN_TURNS}):
+        if t in table and "human" in table[t]:
+            out["by_turn"][t] = table[t]["human"]
+    gate = out["by_turn"].get(HUMAN_GATE_TURN)
+    out["gate"] = gate[0] if gate else None
+    return out
 
 
 def format_summary(res: dict[str, Any]) -> str:
@@ -457,6 +554,14 @@ def format_summary(res: dict[str, Any]) -> str:
     probes = [f"T{t} {table[t]['probe']:.2f}" for t in (4, 7, 10) if t in table and "probe" in table[t]]
     if probes:
         parts.append("probe " + " ".join(probes))
+    tiers = [f"T{t} {table[t]['tier']:.1f}" for t in (7, 10, 13) if t in table]
+    if tiers:
+        parts.append("tier " + " ".join(tiers) + (f" (forced: {meta['forced_curve']})" if meta.get("forced_curve") else ""))
+    human = human_summary(res)
+    if human and human["by_turn"]:
+        labels = _human_labels(meta)
+        t = HUMAN_GATE_TURN if HUMAN_GATE_TURN in human["by_turn"] else max(human["by_turn"])
+        parts.append(f"vs humans T{t} " + " ".join(f"{lab} {v:.1%}" for lab, v in zip(labels, human["by_turn"][t])))
     parts.append(f"{meta['games']} lobbies")
     return " | ".join(parts)
 
@@ -481,6 +586,7 @@ def versus(
     search_b: SearchSpec | None = None,
     probe: ProbeSpec | None = None,
     workers: int | None = None,
+    yardstick: YardstickSpec | None = None,
 ) -> dict[str, Any]:
     """Agents `a` and `b` (checkpoint paths or `(model_config, state_dict)` pairs; they may be the
     same checkpoint, with only one searching) take 4 seats each in `games` 8-seat Solo lobbies, the
@@ -491,7 +597,12 @@ def versus(
 
     One `PlayOptions` governs a game, so both agents must play under the same move rules
     (`checkpoint_options` of each, or `options_a`/`options_b`): anything else raises `ValueError`.
-    The same holds for the search: if both sides search, they must use the same `SearchSpec`."""
+    The same holds for the search: if both sides search, they must use the same `SearchSpec`.
+
+    The forced curve is per side: each agent's seats are forced as its own options say
+    (`forced_curve`), so a network trained on a curve can meet one trained without. If both are
+    forced, the curves must be the same. With `yardstick`, both sides' boards are scored against the
+    human winner boards and the result has both sides' tables by turn (`by_turn`)."""
     config = config or LobbyConfig()
     if config.duos or config.players != 8:
         raise ValueError("versus plays 8-player Solo lobbies")
@@ -507,16 +618,27 @@ def versus(
         raise ValueError("both sides search: they must use the same SearchSpec")
     spec = search_a or search_b
     controllers = tuple(c for c, s in ((AGENT, search_a), (RIVAL, search_b)) if s is not None)
-    options = dataclasses.replace(opts_a, search=spec, search_controllers=controllers)
-    if probe is not None:
-        options = dataclasses.replace(options, turn_stats=True, probe=probe)
+    curves = {c: tuple(o.forced_curve) for c, o in ((AGENT, opts_a), (RIVAL, opts_b)) if o.forced_curve}
+    if len(set(curves.values())) > 1:
+        raise ValueError("both sides are on a forced curve: they must be on the same one")
+    options = dataclasses.replace(
+        opts_a,
+        search=spec,
+        search_controllers=controllers,
+        forced_curve=next(iter(curves.values()), None),
+        forced_controllers=tuple(curves) or None,
+    )
+    if probe is not None or yardstick is not None:
+        options = dataclasses.replace(options, turn_stats=True, probe=probe, yardstick=yardstick)
     rng = random.Random(seed)
     specs, a_units = [], {}
     for g in range(games):
         seats = [AGENT] * 4 + [RIVAL] * 4
         rng.shuffle(seats)
         units = tuple(u for u, s in enumerate(seats) if s == AGENT)
-        specs.append(GameSpec(seed=seed + g, controllers=seats, probe_units=units if probe is not None else ()))
+        # The probe scores a's boards; the yardstick scores both sides'.
+        scored = tuple(range(8)) if yardstick is not None else units if probe is not None else ()
+        specs.append(GameSpec(seed=seed + g, controllers=seats, probe_units=scored))
         a_units[seed + g] = units
     sources = {AGENT: a, RIVAL: b}
     label = lambda x: "<state_dict>" if isinstance(x, (tuple, list)) else str(x)  # noqa: E731
@@ -551,6 +673,9 @@ def versus(
             "search_a": dataclasses.asdict(search_a) if search_a is not None else None,
             "search_b": dataclasses.asdict(search_b) if search_b is not None else None,
             "rules": {r: str(getattr(options, r)) for r in _RULES},
+            "forced_a": curve_label(curves[AGENT]) if AGENT in curves else None,
+            "forced_b": curve_label(curves[RIVAL]) if RIVAL in curves else None,
+            "yardstick": dataclasses.asdict(yardstick) if yardstick is not None else None,
             "commit": commit,
             "dirty": dirty,
             "engine": _engine_fingerprint(),
@@ -563,12 +688,13 @@ def versus(
         "b": _place_stats(places[RIVAL]),
         "lobbies": lobbies,
     }
-    if probe is not None:
+    if probe is not None or yardstick is not None:
         seats = {AGENT: [], RIVAL: []}
         for r in results:
             for u in range(config.units):
                 seats[AGENT if u in a_units[r.seed] else RIVAL].append(r.turn_stats[u])
         out["by_turn"] = {"a": _turn_table(seats[AGENT], True), "b": _turn_table(seats[RIVAL], True)}
+        out["behavior"] = {k: _behavior(seats[g], out["by_turn"][k]) for k, g in (("a", AGENT), ("b", RIVAL))}
     return out
 
 
@@ -578,17 +704,35 @@ def format_versus(res: dict[str, Any]) -> str:
 
     def name(side: str) -> str:
         s = meta[f"search_{side}"]
-        return f"{meta[side]}" + (f" [{_search_label(s)}]" if s else "")
+        forced = meta.get(f"forced_{side}")
+        return f"{meta[side]}" + (f" [{_search_label(s)}]" if s else "") + (f" [forced curve: {forced}]" if forced else "")
 
-    return "\n".join(
-        [
-            f"versus | {meta['games']} lobbies, 4 seats each | seed {meta['seed']} | commit {commit} | "
-            f"engine {meta['engine'] or '?'} | {meta['seconds']:.0f}s",
-            "  " + _line("a", res["a"]) + f"  <- {name('a')}",
-            "  " + _line("b", res["b"]) + f"  <- {name('b')}",
-            f"a - 4.5: {res['a']['avg_place'] - 4.5:+.2f} ± {2 * res['a']['stderr']:.2f} (2σ); negative: a is better",
-        ]
-    )
+    lines = [
+        f"versus | {meta['games']} lobbies, 4 seats each | seed {meta['seed']} | commit {commit} | "
+        f"engine {meta['engine'] or '?'} | {meta['seconds']:.0f}s",
+        "  " + _line("a", res["a"]) + f"  <- {name('a')}",
+        "  " + _line("b", res["b"]) + f"  <- {name('b')}",
+        f"a - 4.5: {res['a']['avg_place'] - 4.5:+.2f} ± {2 * res['a']['stderr']:.2f} (2σ); negative: a is better",
+    ]
+    if "by_turn" in res:
+        labels = _human_labels(meta)
+        for side in ("a", "b"):
+            table = _turns(res["by_turn"][side])
+            cells = []
+            for t in (7, 10, 13):
+                if t not in table:
+                    continue
+                e = table[t]
+                cell = f"T{t} tier {e['tier']:.1f}"
+                if "stats" in e:
+                    cell += f", stats {e['stats']:,.0f}, t5+ {e['high']:.1f}"
+                if "human" in e:
+                    cell += ", " + " ".join(f"{lab} {v:.1%}" for lab, v in zip(labels, e["human"]))
+                cells.append(cell)
+            types = (res.get("behavior", {}).get(side) or {}).get("final_types") or {}
+            top = " | last boards: " + ", ".join(f"{t} {share:.0%}" for t, share in list(types.items())[:4]) if types else ""
+            lines.append(f"  {side}: " + " | ".join(cells) + top)
+    return "\n".join(lines)
 
 
 # -- Comparing ------------------------------------------------------------------------------------
@@ -683,6 +827,14 @@ def main(argv: list[str] | None = None) -> None:
         help="order the model's board by search (positioning.py): as the checkpoint was trained, or override",
     )
     r.add_argument("--no-probe", action="store_true")
+    r.add_argument("--no-yardstick", action="store_true", help="skip the fights against human winner boards (yardstick.py)")
+    r.add_argument(
+        "--force-curve",
+        default="checkpoint",
+        metavar="checkpoint|off|CURVE",
+        help="the forced leveling curve of the agent's seats (curriculum.py): as the checkpoint was trained "
+        "(default), none, or a named curve or turn:tier,... list",
+    )
     r.add_argument("--deterministic", action="store_true", help="take the most likely action")
     r.add_argument(
         "--max-steps-per-turn",
@@ -704,6 +856,20 @@ def main(argv: list[str] | None = None) -> None:
     v.add_argument("--search-a", action="store_true", help="a searches inside its turns")
     v.add_argument("--search-b", action="store_true", help="b searches inside its turns")
     _search_args(v)
+    for side in ("a", "b"):
+        v.add_argument(
+            f"--force-{side}",
+            default="checkpoint",
+            metavar="checkpoint|off|CURVE",
+            help=f"the forced leveling curve of {side}'s seats (curriculum.py): as trained (default), none, or a curve",
+        )
+    v.add_argument(
+        "--max-steps-per-turn",
+        type=int,
+        default=None,
+        help="one step cap for both sides (default: each checkpoint's own, which must then be equal)",
+    )
+    v.add_argument("--no-yardstick", action="store_true", help="skip the fights against human winner boards and the tables by turn")
     v.add_argument("--out", default=None, metavar="FILE.json", help="write the full result here")
     v.add_argument("--json", action="store_true", help="print the full result as JSON")
     c = sub.add_parser("compare", help="compare two result files")
@@ -718,6 +884,7 @@ def main(argv: list[str] | None = None) -> None:
             deterministic=args.deterministic,
             **({} if args.auto_position == "checkpoint" else {"auto_position": PositionSpec() if args.auto_position == "on" else None}),
             **({"max_steps_per_turn": args.max_steps_per_turn} if args.max_steps_per_turn else {}),
+            **({} if args.force_curve == "checkpoint" else {"forced_curve": parse_curve(args.force_curve)}),
         )
         res = rate(
             args.agent,
@@ -729,6 +896,7 @@ def main(argv: list[str] | None = None) -> None:
             workers=args.workers,
             replay_dir=args.replays,
             search=_search_spec(args) if args.search else None,
+            yardstick=None if args.no_yardstick else YardstickSpec(),
         )
         if args.out:
             os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
@@ -737,14 +905,25 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(res) if args.json else format_report(res))
     elif args.cmd == "versus":
         spec = _search_spec(args)
+
+        def side_options(agent: str, force: str) -> PlayOptions:
+            return dataclasses.replace(
+                checkpoint_options(agent),
+                **({"max_steps_per_turn": args.max_steps_per_turn} if args.max_steps_per_turn else {}),
+                **({} if force == "checkpoint" else {"forced_curve": parse_curve(force)}),
+            )
+
         res = versus(
             args.a,
             args.b,
             games=args.games,
             seed=args.seed,
+            options_a=side_options(args.a, args.force_a),
+            options_b=side_options(args.b, args.force_b),
             search_a=spec if args.search_a else None,
             search_b=spec if args.search_b else None,
             workers=args.workers,
+            yardstick=None if args.no_yardstick else YardstickSpec(),
         )
         if args.out:
             os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)

@@ -30,7 +30,11 @@ the reference it matches bit for bit.
 
 Turn stats (`PlayOptions.turn_stats`, Solo only) record every living player's board, Tier, Gold and
 actions as each turn's shopping ends. With `PlayOptions.probe`, the boards of `GameSpec.probe_units`
-are also scored against a library of reference boards (`probe.py`).
+are also scored against a library of reference boards (`probe.py`), and with `PlayOptions.yardstick`
+against a set of human winner boards (`yardstick.py`).
+
+The forced leveling curve (`PlayOptions.forced_curve`, `curriculum.py`) is a training scaffold: on a
+forced seat, the environment takes the Tavern upgrade whenever the seat is below the curve.
 """
 
 from __future__ import annotations
@@ -40,7 +44,7 @@ import multiprocessing as mp
 import os
 import random
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
@@ -52,12 +56,13 @@ from .actions import (
     ACTION_SPACE_SIZE,
     ACTION_TO_INDEX,
     END_TURN_INDEX,
+    MAX_SHOP,
     action_from_index,
     action_mask,
 )
 from .bots import HeuristicBot, RandomBot
 from .gamerbot import NineKGamerBot
-from .env import compute_board_power
+from .env import FORCED, compute_board_power
 from . import features, packing
 from .features import NUM_SLOTS, PLAYER_DIM, SLOT_NUM_DIM, encode_observation, fast_encode, fast_mask
 from .model import BattlegroundsMLP
@@ -66,6 +71,7 @@ if TYPE_CHECKING:
     from .positioning import PositionSpec
     from .search import SearchSpec
     from .probe import ProbeSpec
+    from .yardstick import YardstickSpec
 
 LEARNER = "learner"
 BOTS = ("heuristic", "random", "9kgamerbot", "9kgamerbot-tempo", "apex", "sovereign")
@@ -73,6 +79,15 @@ BOTS = ("heuristic", "random", "9kgamerbot", "9kgamerbot-tempo", "apex", "sovere
 REPOSITION = ACTION_KIND_IDS == ACTION_KINDS.index("reposition")
 # The Toggle Freeze action: with the positioning step, allowed only there, once a turn.
 FREEZE = ACTION_KIND_IDS == ACTION_KINDS.index("toggle_freeze")
+UPGRADE_INDEX = ACTION_TO_INDEX[("upgrade_tavern", None, None)]
+# The Buy action of each shop position (`PlayOptions.school_buys` limits them).
+BUY_INDICES = [ACTION_TO_INDEX[("buy", s, None)] for s in range(MAX_SHOP)]
+# `PlayOptions.school_buys`: only minions, or only minions of the lobby's types.
+SCHOOL_BUYS = ("minions", "own")
+# A board has a minion type when this many of its minions share it (`board_type`).
+TYPE_MINIONS = 4
+# Minions of this Tavern Tier or higher count as high-tier (`TurnStat.high`).
+HIGH_TIER = 5
 
 
 def potential(obs: Any, board: float = 1.0, health: float = 0.0) -> float:
@@ -85,6 +100,39 @@ def potential(obs: Any, board: float = 1.0, health: float = 0.0) -> float:
     if health:
         value += health * (obs.health + obs.armor) / 40.0
     return value
+
+
+def limit_buys(mask: np.ndarray, seat: "Seat", obs: Any, limit: str) -> None:
+    """Type school's buy limit (`PlayOptions.school_buys`), applied to `mask` in place: with
+    "minions" a Buy of a Tavern spell is masked out, and with "own" also a Buy of a minion that has
+    none of the lobby's minion types (a minion of every type has them all)."""
+    buys = [s for s, i in enumerate(BUY_INDICES) if mask[i]]
+    if not buys or seat.game.phase != "turn":
+        return
+    shop = (obs if obs is not None else seat.observe()).shop
+    lobby = set(seat.game.tribes)
+    for s in buys:
+        u = shop[s]
+        if u.is_spell or (limit == "own" and u.tribe != "all" and not lobby.intersection(u.tribes)):
+            mask[BUY_INDICES[s]] = False
+
+
+def board_type(board: list) -> str:
+    """The minion type that `TYPE_MINIONS` or more of the board's minions share (minions of every type
+    count toward each), or "" when no type has that many."""
+    counts: dict[str, int] = {}
+    wild = 0
+    for u in board:
+        if u.tribe == "all":
+            wild += 1
+            continue
+        for t in u.tribes:
+            if t != "none":
+                counts[t] = counts.get(t, 0) + 1
+    if not counts:
+        return ""
+    best = max(sorted(counts), key=lambda t: counts[t])
+    return best if counts[best] + wild >= TYPE_MINIONS else ""
 
 
 def placement_reward(place: int, units: int) -> float:
@@ -224,6 +272,24 @@ class PlayOptions:
     # `aux_horizons` as `aux_target` / `aux_mask` (`Trajectory.arrays`). The fights are the added cost.
     aux_probe: "ProbeSpec | None" = None
     aux_horizons: tuple[int, ...] = (0, 2, 4)
+    # With `turn_stats`: also score the end-of-turn board of each unit in `GameSpec.probe_units`
+    # against a set of human winner boards (`yardstick.py`).
+    yardstick: "YardstickSpec | None" = None
+    # Type school's buy limit (`curriculum.py`; a training scaffold), for the model seats (never a
+    # rule bot) of a game with its own number of minion types (`GameSpec.tribes`). "own": such a
+    # seat can buy only minions of one of the lobby's types, so no Tavern spell and no typeless
+    # minion. "minions": only minions. The other Buy actions are masked out, and what a seat gets
+    # any other way (a Discover, a Triple Reward, a Hero Power) is not limited. None: no limit.
+    # The units in `GameSpec.free_units` are left off it.
+    school_buys: str | None = None
+    # The forced leveling curve (`curriculum.py`; a training scaffold): `(turn, Tavern Tier)` steps.
+    # On a forced seat, whenever it is the seat's turn to act, its Tier is below the curve's for the
+    # turn and the Tavern upgrade is legal, the environment takes the upgrade. It is counted as
+    # "forced_upgrade", is not one of the seat's decisions and is never recorded. Forced seats: the
+    # model seats (never a rule bot) of `forced_controllers` (None: every model controller), except
+    # the units in `GameSpec.unforced_units`. Search lines (`search.py`) do not apply the curve.
+    forced_curve: tuple[tuple[int, int], ...] | None = None
+    forced_controllers: tuple[str, ...] | None = None
 
 
 @dataclass
@@ -232,8 +298,14 @@ class GameSpec:
 
     seed: int
     controllers: list[str]
-    # The units whose boards are probed (`PlayOptions.probe`).
+    # The units whose boards are probed (`PlayOptions.probe`, `PlayOptions.yardstick`).
     probe_units: tuple[int, ...] = ()
+    # The units left off the forced curve (`PlayOptions.forced_curve`).
+    unforced_units: tuple[int, ...] = ()
+    # The minion types in this game's lobby, in place of `LobbyConfig.tribes` (None: the config's).
+    tribes: int | None = None
+    # The units left off type school's buy limit (`PlayOptions.school_buys`).
+    free_units: tuple[int, ...] = ()
 
 
 @dataclass
@@ -247,6 +319,11 @@ class TurnStat:
     board: int  # minions on the board
     actions: dict[str, int]  # actions taken this turn, by kind
     probe: float | None = None  # `probe.score_board` of the board, for probed units
+    stats: int = 0  # the board's total Attack + Health
+    high: int = 0  # minions of Tavern Tier `HIGH_TIER` or higher on the board
+    type: str = ""  # the board's minion type (`board_type`), "" for none
+    # `yardstick.score` of the board, one value per scale, for probed units on the yardstick's turns.
+    yardstick: tuple[float, ...] | None = None
 
 
 @dataclass
@@ -389,6 +466,11 @@ class _Seat:
         self.froze = False
         # The actions taken this phase, by kind.
         self.kinds: dict[str, int] = {}
+        # On the forced curve (`PlayOptions.forced_curve`), and still below it this turn.
+        self.forced = False
+        self.behind = False
+        # The seat's buy limit (`PlayOptions.school_buys`), or None.
+        self.buy_limit: str | None = None
 
 
 def _bot(controller: str, seed: int) -> Any | None:
@@ -427,6 +509,8 @@ def play_games(
     shopping ends, before the combats. It is for in-process use (the probe library builder).
     """
     opts = options or PlayOptions()
+    if opts.school_buys is not None and opts.school_buys not in SCHOOL_BUYS:
+        raise ValueError(f"school_buys is one of {SCHOOL_BUYS}, got {opts.school_buys!r}")
     if (opts.turn_stats or opts.probe is not None or opts.aux_probe is not None) and config.duos:
         raise ValueError("turn stats, the probe and the auxiliary probe targets are Solo-only")
     searching = opts.search is not None and bool(opts.search_controllers)
@@ -448,9 +532,19 @@ def play_games(
         from . import probe
 
         aux_library = probe.library_for(opts.aux_probe, config)
+    if opts.yardstick is not None:
+        if config.duos:
+            raise ValueError("the yardstick is Solo-only")
+        from . import yardstick
+    curve = tuple(opts.forced_curve) if opts.forced_curve else None
+    if curve is not None:
+        from .curriculum import target_tier
+    upgrade = action_from_index(UPGRADE_INDEX)
     stats: list[list[list[TurnStat]]] = [[[] for _ in range(config.players)] for _ in specs]
     games = [
-        config.make(spec.seed, meta={"source": "seaglass_rl.play", "controllers": ",".join(spec.controllers)})
+        (config if spec.tribes is None else replace(config, tribes=spec.tribes)).make(
+            spec.seed, meta={"source": "seaglass_rl.play", "controllers": ",".join(spec.controllers)}
+        )
         for spec in specs
     ]
     seats: list[list[_Seat]] = []
@@ -469,7 +563,21 @@ def play_games(
                 traj.aux_horizons = tuple(opts.aux_horizons)
             if traj is not None and searching and ctrl in opts.search_controllers:
                 traj.search_policy = []
-            row.append(_Seat(ctrl, _bot(ctrl, spec.seed * 16 + p), traj))
+            st = _Seat(ctrl, _bot(ctrl, spec.seed * 16 + p), traj)
+            st.forced = (
+                curve is not None
+                and st.bot is None
+                and (opts.forced_controllers is None or ctrl in opts.forced_controllers)
+                and game.unit_of(p) not in spec.unforced_units
+            )
+            if (
+                opts.school_buys is not None
+                and spec.tribes is not None
+                and st.bot is None
+                and game.unit_of(p) not in spec.free_units
+            ):
+                st.buy_limit = opts.school_buys
+            row.append(st)
         seats.append(row)
         views.append([Seat(game, p) for p in range(config.players)])
 
@@ -491,8 +599,13 @@ def play_games(
 
     def mask_for(seat: Seat, obs: Any, st: _Seat) -> np.ndarray:
         if not opts.positioning_phase:
-            return base_mask(seat, obs, opts.allow_reposition, opts.allow_freeze)
+            mask = base_mask(seat, obs, opts.allow_reposition, opts.allow_freeze)
+            if st.buy_limit is not None:
+                limit_buys(mask, seat, obs, st.buy_limit)
+            return mask
         mask = base_mask(seat, obs, st.arranging, opts.allow_freeze and st.arranging and not st.froze)
+        if st.buy_limit is not None:
+            limit_buys(mask, seat, obs, st.buy_limit)
         if st.arranging:
             # The end-of-turn step: Repositions (while any are left), one Toggle Freeze, End Turn.
             if st.moves_left <= 0:
@@ -519,7 +632,7 @@ def play_games(
             idx = ACTION_TO_INDEX[("reposition", f, t)]
             if not game.is_legal(p, action_from_index(idx)):
                 break
-            _apply(game, p, st, idx, {"auto": "position"} if opts.keep_replays else None, kind="auto_position")
+            _apply(game, p, st, idx, FORCED, kind="auto_position")
 
     def model_step(g: int, p: int, idx: int, note: dict[str, Any] | None, board: int) -> None:
         """Take a model's action, with the end-of-turn step ("prepping the board for battle"): its
@@ -545,6 +658,21 @@ def play_games(
             if st.moves_left <= 0 and (st.froze or not opts.allow_freeze) and not games[g].is_done(p):
                 position(g, p)
                 _apply(games[g], p, st, END_TURN_INDEX, None)
+
+    def force_levels(g: int, p: int) -> None:
+        """The forced curve: while the seat is below the curve's Tier for the turn and the Tavern
+        upgrade is legal, the environment takes it. Not a decision of the seat: nothing is recorded
+        in its trajectory, and it does not count against the step cap. The step carries the engine's
+        `forced` note, as the automatic reorder does: it costs none of the seat's turn timer, and a
+        replay shows it as made for the seat."""
+        game, st = games[g], seats[g][p]
+        target = target_tier(curve, game.turn)
+        while st.behind and not game.is_done(p) and game.is_legal(p, upgrade):
+            if game.observe(p).tavern_tier >= target:
+                st.behind = False
+                break
+            _apply(game, p, st, UPGRADE_INDEX, FORCED, kind="forced_upgrade")
+            st.steps -= 1
 
     def close(traj: Trajectory, reward: float, place: int) -> None:
         """The seat's unit was placed: the terminal reward (and potential 0) end it."""
@@ -575,6 +703,7 @@ def play_games(
                 st.moves_left = 0
                 st.froze = False
                 st.kinds = {}
+                st.behind = st.forced and games[g].phase == "turn"
         step = 0
         while True:
             # Who acts now: every player still to act, unless they are over the step cap. In Duos,
@@ -609,6 +738,10 @@ def play_games(
             coros: list[Any] = []
             for g, p in todo:
                 game, st, seat = games[g], seats[g][p], views[g][p]
+                if st.behind and not st.arranging:
+                    force_levels(g, p)
+                    if game.is_done(p):
+                        continue
                 if st.bot is not None and st.traj is None:
                     idx = st.bot.act(seat)
                     if not seat.is_legal(action_from_index(idx)):
@@ -736,16 +869,28 @@ def play_games(
                         return scores[spec]
 
                     if opts.turn_stats:
+                        board = list(obs.board)
                         stat = TurnStat(
                             turn=game.turn,
                             tier=obs.tavern_tier,
                             gold_left=obs.gold,
                             health=obs.health + obs.armor,
-                            board=len(obs.board),
+                            board=len(board),
                             actions=dict(seats[g][p].kinds),
+                            stats=sum(u.attack + u.health for u in board),
+                            high=sum(u.tavern_tier >= HIGH_TIER for u in board),
+                            type=board_type(board),
                         )
                         if opts.probe is not None and unit in specs[g].probe_units:
                             stat.probe = probe_of(opts.probe, library)
+                        if opts.yardstick is not None and unit in specs[g].probe_units and board:
+                            stat.yardstick = yardstick.score(
+                                opts.yardstick,
+                                board,
+                                obs.tavern_tier,
+                                game.turn,
+                                seed=specs[g].seed * 1_000_033 + p * 1_013 + game.turn,
+                            )
                         stats[g][p].append(stat)
                     traj = seats[g][p].traj
                     if opts.aux_probe is not None and traj is not None:
@@ -876,10 +1021,23 @@ def _model_from(name: str, source: Any, seed: int) -> BattlegroundsMLP:
     return model
 
 
+class LostPlay(RuntimeError):
+    """A play that a crash ended (the engine panicked, or a worker process died): its games are
+    lost, and the `Player` can play again. `train_lobby` replays the iteration on other seeds."""
+
+
 def _play_chunk(job: tuple) -> list[GameResult]:
     config, specs, sources, options, record, seed = job
     models = {name: _model_from(name, src, seed + i) for i, (name, src) in enumerate(sources.items())}
-    return play_games(config, specs, models, options, record)
+    try:
+        return play_games(config, specs, models, options, record)
+    except BaseException as e:
+        # A Rust panic reaches Python as `pyo3_runtime.PanicException`, which is not an `Exception`:
+        # left alone it ends the worker process. The engine prints where it panicked.
+        if type(e).__name__ != "PanicException":
+            raise
+        seeds = ", ".join(str(spec.seed) for spec in specs)
+        raise LostPlay(f"the engine panicked ({e}) in one of the lobbies of seeds {seeds}") from None
 
 
 class Player:
@@ -893,19 +1051,22 @@ class Player:
         self.workers = workers
         self.pool = None
         if workers > 0:
-            # One BLAS/OpenMP thread per worker: the workers' small matrix products would otherwise
-            # oversubscribe the cores many times over. A spawned worker reads these before it
-            # loads numpy and torch (a forked one would inherit the parent's thread pools).
-            saved = {k: os.environ.get(k) for k in _THREAD_VARS}
-            os.environ.update({k: "1" for k in _THREAD_VARS})
-            try:
-                self.pool = mp.get_context("spawn").Pool(workers, initializer=_init_worker)
-            finally:
-                for k, v in saved.items():
-                    if v is None:
-                        os.environ.pop(k, None)
-                    else:
-                        os.environ[k] = v
+            self._start_pool()
+
+    def _start_pool(self) -> None:
+        # One BLAS/OpenMP thread per worker: the workers' small matrix products would otherwise
+        # oversubscribe the cores many times over. A spawned worker reads these before it
+        # loads numpy and torch (a forked one would inherit the parent's thread pools).
+        saved = {k: os.environ.get(k) for k in _THREAD_VARS}
+        os.environ.update({k: "1" for k in _THREAD_VARS})
+        try:
+            self.pool = mp.get_context("spawn").Pool(self.workers, initializer=_init_worker)
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
 
     def play(
         self,
@@ -930,9 +1091,31 @@ class Player:
         for i, c in enumerate(chunks):
             jobs.append((config, c, used_by(c), options, record, seed + 7919 * i))
         results: list[GameResult] = []
-        for part in self.pool.map(_play_chunk, jobs):
+        for part in self._map(jobs):
             results.extend(part)
         return results
+
+    def _map(self, jobs: list[tuple]) -> list[list[GameResult]]:
+        """`pool.map(_play_chunk, jobs)`, except that a worker that dies is an error (`LostPlay`).
+
+        `multiprocessing.Pool` replaces a worker that died (killed for memory, or a crash in native
+        code) and then waits for the lost task forever, so a run would hang with nothing in its log.
+        The workers are never retired, so one missing from the pool has died. The pool is started
+        again, so the player can go on."""
+        workers = {w.pid for w in self.pool._pool}
+        pending = self.pool.map_async(_play_chunk, jobs)
+        while True:
+            try:
+                return pending.get(timeout=2.0)
+            except mp.TimeoutError:
+                gone = workers - {w.pid for w in self.pool._pool}
+                if gone:
+                    self.pool.terminate()
+                    self._start_pool()
+                    raise LostPlay(
+                        f"worker process {sorted(gone)[0]} died while playing games (killed for memory, or a "
+                        "crash in the engine): its games are lost, so this play is stopped"
+                    ) from None
 
     def close(self) -> None:
         if self.pool is not None:

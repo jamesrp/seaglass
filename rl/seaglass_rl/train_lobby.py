@@ -20,9 +20,18 @@ Each iteration:
    its expectation is the value. That equals the return only with gamma 1 and no shaping, so
    the trainer refuses a placement critic with either.
 3. **Every `--eval-every` iterations**: rate the learner on a ladder of rule bots (`--eval-ladder`,
-   default `fast`: `ladder.py`, 500 lobbies, with the per-turn probe), and save `latest.pt`.
-   `--eval-ladder heuristic` keeps the older, weaker check: alone against HeuristicBots
-   (`evaluate.py`).
+   default `fast`: `ladder.py`, 500 lobbies, with the per-turn probe and the human yardstick,
+   `yardstick.py`), and save `latest.pt`. `--eval-ladder heuristic` keeps the older, weaker check:
+   alone against HeuristicBots (`evaluate.py`).
+
+`--force-curve` is the "endgame school" scaffold (`curriculum.py`): the environment levels every
+model seat on a fixed curve, so the learner plays the late game it otherwise never visits.
+`--force-share` below 1 leaves some seats to level by themselves, to take the scaffold away again.
+`--school-tribes` is the "type school" scaffold: a share of the training lobbies has fewer minion
+types (`1:0.5`: half of them have one), so the learner has to make every type's cards work. With
+`--school-buys own` a model seat of such a lobby can buy only minions of the lobby's types, and
+`--school-buys-share` below 1 leaves some units off that limit, to take it away again. The
+evaluation keeps `--tribes` and has no buy limit.
 
 The run directory holds `args.json`, `log.jsonl` (one line per iteration), `latest.pt`,
 `snapshots/iter_XXXXX.pt` and `evals/iter_XXXXX.json` (the full ladder results).
@@ -42,15 +51,17 @@ import torch
 
 from . import checkpoint
 from .behavior import behavior_stats, format_behavior
+from .curriculum import CURVES, TypeMix, draw_types, parse_curve, parse_type_mix
 from .device import add_device_arg, cpu_state_dict, default_threads, default_workers, empty_cache, pick_device
 from . import ladder
 from .evaluate import evaluate, format_result
 from .model import BattlegroundsMLP
-from .play import BOTS, LobbyConfig, LEARNER, GameSpec, Player, PlayOptions
+from .play import BOTS, LobbyConfig, LEARNER, SCHOOL_BUYS, GameSpec, LostPlay, Player, PlayOptions
 from .positioning import PositionSpec
 from .probe import ProbeSpec
 from .ppo import build_batch, ppo_update
 from .transformer import EntityTransformer
+from .yardstick import YardstickSpec
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -95,6 +106,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar="HOURS",
         help="stop after the first iteration that ends past this many hours, with a final save and evaluation",
     )
+    p.add_argument(
+        "--max-lost-plays",
+        type=int,
+        default=3,
+        help="how many plays the run may lose to a crash (an engine panic, a dead worker) before it stops: "
+        "a lost iteration is played again on other seeds, a lost check is skipped (0: stop at the first)",
+    )
     p.add_argument("--games", type=int, default=64, help="lobbies per iteration")
     p.add_argument(
         "--workers",
@@ -117,6 +135,42 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="pure self-play: no rule bots in training; the learner fills every seat until the first "
         "snapshot, then plays against its snapshots (evaluation still uses the rule bots)",
+    )
+    p.add_argument(
+        "--force-curve",
+        default=None,
+        metavar="CURVE",
+        help="endgame school (curriculum.py): the environment takes the Tavern upgrade for every model seat that "
+        f"is below this leveling curve ({', '.join(CURVES)}, or turn:tier,turn:tier,...). The forced upgrades are "
+        "not the policy's decisions and are not trained on. A scaffold: not with --pure",
+    )
+    p.add_argument(
+        "--force-share",
+        type=float,
+        default=1.0,
+        help="with --force-curve: the chance that a model seat of a training game is on the curve (default 1: "
+        "every seat). Below 1, the evaluation plays with no curve",
+    )
+    p.add_argument(
+        "--school-tribes",
+        default=None,
+        metavar="TYPES:SHARE,...",
+        help="type school (curriculum.py): play this share of the training lobbies with this many minion types in "
+        "place of --tribes, for example 1:0.5 or 1:0.4,2:0.2. The evaluation keeps --tribes",
+    )
+    p.add_argument(
+        "--school-buys",
+        choices=("any", *SCHOOL_BUYS),
+        default="any",
+        help="with --school-tribes: what a model seat of a school lobby can buy. own: only minions of the lobby's "
+        "types (no Tavern spell, no typeless minion); minions: only minions; any (default): no limit",
+    )
+    p.add_argument(
+        "--school-buys-share",
+        type=float,
+        default=1.0,
+        help="with --school-buys: the chance that a unit of a school lobby is under the buy limit. The rest buy "
+        "freely, next to limited seats, which is how the limit is taken away again (default 1: every unit)",
     )
     p.add_argument("--snapshot-every", type=int, default=10)
     p.add_argument("--pool-recent", type=int, default=4, help="the latest snapshots that are opponents every iteration")
@@ -178,6 +232,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="turns ahead the auxiliary head predicts the board probe at (comma-separated; 0 is this turn's board)",
     )
     p.add_argument("--no-eval-probe", action="store_true", help="skip the per-turn board probe in ladder evaluations")
+    p.add_argument(
+        "--no-eval-yardstick", action="store_true", help="skip the fights against human winner boards in ladder evaluations"
+    )
     p.add_argument("--replays", action="store_true", help="save a few eval games as replays in RUN_DIR/replays/iter_XXXXX")
     p.add_argument("--seed", type=int, default=0)
     return p.parse_args(argv)
@@ -255,11 +312,45 @@ def lobby_config(args: argparse.Namespace) -> LobbyConfig:
     )
 
 
+def lose_play(lost: int, limit: int, what: str, error: Exception) -> int:
+    """Count a play lost to a crash (`play.LostPlay`) and say so; past `limit` of them the run stops."""
+    lost += 1
+    print(f"lost play {lost} (the run stops past {limit}): {what}: {error}", flush=True)
+    if lost > limit:
+        raise SystemExit(f"{lost} plays were lost to crashes (--max-lost-plays {limit}): the run stops")
+    return lost
+
+
+def type_mix(args: argparse.Namespace) -> TypeMix:
+    """`--school-tribes` as a mix (`curriculum.parse_type_mix`)."""
+    try:
+        return parse_type_mix(getattr(args, "school_tribes", None))
+    except ValueError as e:
+        raise SystemExit(f"--school-tribes: {e}")
+
+
+def forced_curve(args: argparse.Namespace, training: bool) -> tuple[tuple[int, int], ...] | None:
+    """`--force-curve` as steps. In an evaluation (`training` False) the curve applies only when every
+    training seat is on it (`--force-share` 1): a learner that has to level by itself in training is
+    rated with no curve (`ladder.saved_curve` reads a checkpoint the same way)."""
+    share = getattr(args, "force_share", 1.0)
+    if getattr(args, "force_curve", None) is None or share <= 0 or (not training and share < 1.0):
+        return None
+    try:
+        return parse_curve(args.force_curve)
+    except ValueError as e:
+        raise SystemExit(f"--force-curve: {e}")
+
+
 def play_options(args: argparse.Namespace, deterministic: bool = False, aux: bool = False) -> PlayOptions:
     """The rollout rules of `args`. With `aux` (training rollouts only) and `--aux-coef > 0`, the
-    recorded seats also get the probe targets."""
+    recorded seats also get the probe targets; the forced curve of a training rollout is the one of
+    `--force-curve`, and an evaluation's is `forced_curve(args, training=False)`."""
     horizons = aux_horizons(args) if aux else ()
     return PlayOptions(
+        forced_curve=forced_curve(args, training=aux),
+        # Inert outside the school lobbies (`GameSpec.tribes`), so also in every evaluation.
+        school_buys=None if getattr(args, "school_buys", "any") == "any" else args.school_buys,
         # Its own reference boards (another seed), so the ladder's probe stays an independent check.
         aux_probe=ProbeSpec(seed=32_000_000) if horizons else None,
         aux_horizons=horizons or (0, 2, 4),
@@ -294,12 +385,23 @@ def make_specs(
     p_bot: float,
     rng: random.Random,
     seed: int,
+    force_share: float = 1.0,
+    type_mix: TypeMix = (),
+    buys_share: float = 1.0,
 ) -> list[GameSpec]:
     """The iteration's games: the learner in `learner_units` random units, the league in the rest.
     Each opponent seat is a rule bot from `bots` (uniformly) with chance `p_bot`, or a snapshot from
     `opponents`; with no snapshot yet it is always a bot. With no snapshot and no bots (`p_bot` 0
-    or `bots` empty), the learner fills every unit."""
+    or `bots` empty), the learner fills every unit. With `force_share` below 1, each unit is left
+    off the forced curve (`GameSpec.unforced_units`) with chance `1 - force_share`. With a
+    `type_mix`, each game's lobby has the minion types the mix draws for it (`GameSpec.tribes`), and
+    with `buys_share` below 1 each unit of such a lobby is left off the buy limit
+    (`GameSpec.free_units`) with chance `1 - buys_share`."""
     specs = []
+    # Their own streams, so the seating is the same with and without a curve, a mix or a buy limit.
+    force_rng = random.Random(seed * 31 + 7)
+    type_rng = random.Random(seed * 37 + 11)
+    buys_rng = random.Random(seed * 41 + 13)
     for g in range(games):
         controllers = []
         everyone = not opponents and (p_bot <= 0 or not bots)
@@ -311,7 +413,16 @@ def make_specs(
                 controllers.append(rng.choice(bots))
             else:
                 controllers.append(rng.choice(opponents))
-        specs.append(GameSpec(seed=seed + g, controllers=controllers))
+        unforced = () if force_share >= 1.0 else tuple(u for u in range(config.units) if force_rng.random() >= force_share)
+        tribes = draw_types(type_mix, type_rng.random()) if type_mix else None
+        free = (
+            ()
+            if tribes is None or buys_share >= 1.0
+            else tuple(u for u in range(config.units) if buys_rng.random() >= buys_share)
+        )
+        specs.append(
+            GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced, tribes=tribes, free_units=free)
+        )
     return specs
 
 
@@ -345,6 +456,22 @@ def main(argv: list[str] | None = None) -> None:
     if args.pure and (args.auto_position or args.aux_coef > 0):
         # Both score boards against a probe library of the rule bots' boards: hand-written play.
         raise SystemExit("--pure trains on no rule bots' play: no --auto-position and no --aux-coef")
+    if args.pure and args.force_curve is not None:
+        # The curve is a hand-written leveling rule (`curriculum.py`).
+        raise SystemExit("--pure trains with no hand-written play rule: no --force-curve")
+    if not 0.0 <= args.force_share <= 1.0:
+        raise SystemExit("--force-share is a chance: 0..1")
+    forced_curve(args, training=True)  # a bad --force-curve stops here, before the workers start
+    mix = type_mix(args)  # and a bad --school-tribes
+    if args.school_buys != "any" and not mix:
+        raise SystemExit("--school-buys limits the buys in school lobbies: it needs --school-tribes")
+    if not 0.0 <= args.school_buys_share <= 1.0:
+        raise SystemExit("--school-buys-share is a chance: 0..1")
+    if args.school_buys_share < 1.0 and args.school_buys == "any":
+        raise SystemExit("--school-buys-share leaves units off the buy limit: it needs --school-buys")
+    if args.pure and args.school_buys != "any":
+        # The limit is a hand-written rule on what a seat buys.
+        raise SystemExit("--pure trains with no hand-written play rule: no --school-buys")
 
     start = 0
     if args.resume:
@@ -393,6 +520,7 @@ def main(argv: list[str] | None = None) -> None:
     print("  HeuristicBot behavior (reference):\n" + format_behavior(
         behavior_stats([t for r in reference for t in r.trajectories])), flush=True)
     t_start = time.time()
+    lost_plays = 0
     try:
         for it in range(start + 1, start + args.iterations + 1):
             t0 = time.time()
@@ -401,14 +529,32 @@ def main(argv: list[str] | None = None) -> None:
                 for g in optimizer.param_groups:
                     g["lr"] = args.lr * frac
             opponents = opponent_set(pool, args.pool_recent, args.pool_history, rng)
-            specs = make_specs(
-                config, args.games, learner_units, opponents, bots, args.p_bot, rng, seed=args.seed * 10_000_019 + it * 1000
-            )
             source = (dict(model.config), cpu_state_dict(model))
-            sources: dict[str, Any] = {LEARNER: source}
-            used = {c for spec in specs for c in spec.controllers}
-            sources.update({p: p for p in opponents if p in used})
-            results = player.play(config, specs, sources, play_options(args, aux=True), seed=it)
+            attempt = 0
+            while True:
+                specs = make_specs(
+                    config,
+                    args.games,
+                    learner_units,
+                    opponents,
+                    bots,
+                    args.p_bot,
+                    rng,
+                    # A play lost to a crash is played again on other seeds.
+                    seed=args.seed * 10_000_019 + it * 1000 + 500 * attempt,
+                    force_share=args.force_share if args.force_curve is not None else 1.0,
+                    type_mix=mix,
+                    buys_share=args.school_buys_share,
+                )
+                sources: dict[str, Any] = {LEARNER: source}
+                used = {c for spec in specs for c in spec.controllers}
+                sources.update({p: p for p in opponents if p in used})
+                try:
+                    results = player.play(config, specs, sources, play_options(args, aux=True), seed=it)
+                    break
+                except LostPlay as e:
+                    lost_plays = lose_play(lost_plays, args.max_lost_plays, f"iteration {it}", e)
+                    attempt += 1
             t_play = time.time() - t0
             trajs = [t for r in results for t in r.trajectories]
             batch = build_batch(trajs, args.gamma, args.lam, args.lam_per)
@@ -435,6 +581,8 @@ def main(argv: list[str] | None = None) -> None:
                 "update_s": round(time.time() - t0 - t_play, 1),
                 **{k: round(v, 4) for k, v in metrics.items()},
             }
+            if mix:
+                row["school_games"] = sum(spec.tribes is not None for spec in specs)
             if it % args.snapshot_every == 0:
                 snap = run / "snapshots" / f"iter_{it:05d}.pt"
                 checkpoint.save(snap, model, iteration=it, args=vars(args))
@@ -459,16 +607,26 @@ def main(argv: list[str] | None = None) -> None:
                     row["eval_vs_heuristic"] = res
                     print("  " + format_result(f"eval iter {it}", res), flush=True)
                 else:
-                    res = ladder.rate(
-                        (dict(model.config), cpu_state_dict(model)),
-                        ladder=args.eval_ladder,
-                        games=args.eval_games,
-                        config=config,
-                        player=player,
-                        options=play_options(args),
-                        probe=None if args.no_eval_probe else ProbeSpec(),
-                        replay_dir=replays,
-                    )
+                    try:
+                        res = ladder.rate(
+                            (dict(model.config), cpu_state_dict(model)),
+                            ladder=args.eval_ladder,
+                            games=args.eval_games,
+                            config=config,
+                            player=player,
+                            options=play_options(args),
+                            probe=None if args.no_eval_probe else ProbeSpec(),
+                            yardstick=None if args.no_eval_yardstick else YardstickSpec(),
+                            replay_dir=replays,
+                        )
+                    except BaseException as e:
+                        # A crash in the check's lobbies, or an engine panic in the yardstick's fights
+                        # (not an `Exception`). The check is skipped: its seeds would crash again.
+                        if not isinstance(e, LostPlay) and type(e).__name__ != "PanicException":
+                            raise
+                        lost_plays = lose_play(lost_plays, args.max_lost_plays, f"the check of iteration {it}", e)
+                        res = None
+                if args.eval_ladder != "heuristic" and res is not None:
                     (run / "evals").mkdir(exist_ok=True)
                     (run / "evals" / f"iter_{it:05d}.json").write_text(json.dumps(res))
                     row["eval"] = {
@@ -477,6 +635,10 @@ def main(argv: list[str] | None = None) -> None:
                         "agent": res["agent"],
                         "tier": {t: e["tier"] for t, e in res["by_turn"]["agent"].items()},
                         "probe": {t: e["probe"] for t, e in res["by_turn"]["agent"].items() if "probe" in e},
+                        "stats": {t: e["stats"] for t, e in res["by_turn"]["agent"].items()},
+                        "high": {t: e["high"] for t, e in res["by_turn"]["agent"].items()},
+                        "human": ladder.human_summary(res),
+                        "final_types": res["behavior"]["agent"]["final_types"],
                     }
                     print("  " + ladder.format_summary(res), flush=True)
                 row["behavior"] = behavior_stats(trajs)

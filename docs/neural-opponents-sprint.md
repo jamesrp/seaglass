@@ -5,7 +5,7 @@
 This is the working plan for making the neural opponents stronger.
 
 - [Section 1](#1-aims-and-decisions) states the aims and the decisions that scope the sprint.
-- [Section 2](#2-the-sprint) is the sprint: five stages, each with a gate.
+- [Section 2](#2-the-sprint) is the sprint: five stages, each with a gate, and a sixth added by the [review after Stage 4](review-2026-11-27.md).
 - [Section 3](#3-why-this-order-the-critique) is the critique of the current approach that the plan answers.
 - [Section 4](#4-measurements) holds the measurements, and [Section 5](#5-caveats) says how far to trust them.
 
@@ -38,6 +38,7 @@ Each stage has a gate. A later stage should not start until the gate before it p
 | 3. Raise throughput (parallel) | Observation encoding out of Python, batched inference | 5 times more games per core, with 10 times as the target |
 | 4. Search inside the turn | Policy-guided search scored by the learned critic | Search plus net beats the net alone, then the distilled net beats the old net |
 | 5. Freeze `bots/` | A pinned reference opponent, useful ideas ported to `rl/` | No hand-written card knowledge in the training path |
+| 6. Teach the late game | A human yardstick on the ladder, then a network trained in lobbies that reach the late game | With no forced leveling, the network levels and wins more against human winner boards |
 
 ### Stage 1: Build the Measuring Instrument
 
@@ -364,6 +365,30 @@ The test was two matched PPO continuations from iteration 1370, run side by side
 Next:
 - **Improve the search itself.** First tune its knobs with short head-to-head runs. Then score lines at the start of the next turn, with this turn's combat simulated against sampled opponent boards (see "Later: Search Beyond the Turn").
 
+#### Stage 4, Tuning the Search and Looking Past the Turn (2026-11-26)
+
+Each variant searched in 4 seats of 400 lobbies against the iteration-1870 network without search in the other 4, on the same seeds. The table gives the searching side's average place (the network alone is 4.5 minus the gap, about 4.8 to 4.9). The difference column is paired by lobby against the default, at two sigma. Lower is better.
+
+| Variant | Searching side | Against the default |
+| :--- | :--- | :--- |
+| Default: 8 candidates, 16 lines, line temperature 1, `c_visit` 50 | 4.125 | — |
+| 32 lines | 4.138 | +0.013 ± 0.110 |
+| 4 candidates | 4.195 | +0.070 ± 0.111 |
+| 16 candidates, 32 lines | 4.227 | +0.102 ± 0.110 |
+| Smaller σ scale (`c_visit` 10) | 4.274 | +0.149 ± 0.111 |
+| Larger σ scale (`c_scale` 2) | 4.085 | -0.040 ± 0.111 |
+| Larger σ scale, line temperature 0.5 | 4.084 | -0.041 ± 0.111 |
+| Line temperature 0.5 | 4.113 | -0.012 ± 0.111 |
+| Greedy lines (temperature 0) | 4.109 | -0.016 ± 0.117 |
+| Scored at the start of the next turn, rule-bot opponent boards | 4.072 | -0.052 ± 0.113 |
+| Scored at the start of the next turn, the network's own boards | 4.059 | -0.066 ± 0.113 |
+| Scored at the end of the next turn, the network's own boards | 4.159 | +0.034 ± 0.112 |
+
+- **The default knobs are near the optimum.** Only the smaller σ scale is clearly worse. Every other change is within ±0.11, the most 400 lobbies can resolve.
+- **Scoring at the start of the next turn helps a little.** The line ends its turn, fights a sampled opponent board, starts the next turn (with its Gold and a fresh shop) and is scored there. That gave the best two results, 4.059 with the network's own boards and 4.072 with the rule bots'. Both are 0.05 to 0.07 better than the default, but inside the interval.
+- **Scoring at the end of the next turn does not.** It came out at 4.159. Playing a whole extra turn on guessed shops and guessed opponents adds noise faster than information, as the Stage 4 caution predicted.
+- **The confirmation was stopped early.** It was an 800-lobby rerun on a fresh seed, default against next-turn-start scoring with greedy lines. The default half finished at 4.187 ± 0.030. The second half was stopped when the weekend's runs were wrapped up early.
+
 ### Later: Search Beyond the Turn (to Evaluate)
 
 These came out of a design discussion with James on 2026-11-23. Each one is to be built behind a flag and judged head to head (`ladder.versus`) and on the slow ladder, like everything else.
@@ -394,6 +419,431 @@ There is no tree below the root, no combat in the search and no model of opponen
 - Keep hand-written card knowledge out of the training path. The static card features already give the network what it needs.
 
 **Gate.** Nothing on the training path names a card.
+
+#### Stage 5 Result (2026-11-26): the gate passes; the pure network is strong but behind the warm-started one
+
+- **The gate.** `rl/tests/test_stage5.py` checks the modules `train_lobby --pure` trains with: the trainer, play, encoding, the network, PPO and the search. No string in them names a card, hero, trinket or Dark Gift. `--pure` games hold no rule bots, and `--pure` refuses everything that would bring rule-bot play into training: `--init`, bot seats, `--auto-position`, `--aux-coef`.
+- **The bots stay as anchors.** The bots stay as the ladder's anchors and as opponents, and every rating now records an `anchors_fingerprint` of their sources.
+- **The four ideas are ported into `rl/`, with tests.** They are the placement critic, turn-level advantages, auxiliary heads and Gumbel targets.
+
+**The pure repeat.** It is the default transformer, trained from scratch with no warm start and no rule bots in training, on the GPU. It was planned for 3,000 iterations and stopped early, at iteration 795 (about 51,000 games), when the weekend's runs were wrapped up. Its last snapshot is iteration 790.
+
+| Pure network, iteration 790 | Result |
+| :--- | :--- |
+| Fast ladder, fresh seed | 2.02 ± 0.04: far ahead of every rule bot (9kgamerbot places 4.31) |
+| Slow ladder | 2.66 ± 0.11, with SovereignBot at 2.03 ± 0.11 |
+| Head to head with the warm-started iteration-1870 network, 400 lobbies | 5.08 against 3.92 |
+
+So the method works with no hand-written play at all: from nothing it passed every rule bot. On this budget it is clearly behind the line that started from a 9kgamerbot clone and had about 120,000 games. Its trainer's check was still improving slowly when it stopped:
+
+| Iteration | 50 | 100 | 200 | 300 | 450 | 600 | 750 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Fast ladder, trainer's check | 5.88 | 3.55 | 2.80 | 2.26 | 2.12 | 2.10 | 2.03 |
+
+### Stage 6: Teach the Late Game
+
+*Added 2026-11-27, after the [review after Stage 4](review-2026-11-27.md).*
+
+The review played the best network (iteration 1870) and compared it with strong human play on this patch. Three findings set this stage.
+
+- **The network wins on Tavern Tiers 2 and 3.** On turn 11 its seats average Tier 3.1, where strong players are on Tier 6. It has one real comp, Mech magnetize, and almost never holds a Tier 5 or 6 engine. Search does not change either.
+- **Its boards are far below human boards.** On turns 12 to 15 they win 1% to 5% of fights against 13 published human winner boards, which hold about 20 times the stats. The rule bots and SovereignBot are in the same range, so every ladder so far has ranked agents inside a low-power field.
+- **It is a stable point, so more of the same will not move it.** Forcing the network onto a human leveling curve costs it 0.57 places against its unforced self. Leveling pays only for a player who can turn Tier 5 and 6 shops into a scaling board, and nobody in the training pool can.
+
+So the late game is an exploration problem. The learner never pays for it, so it never sees it, so it never learns that it pays. This stage puts the learner there directly, measures it against humans, and then takes the scaffold away.
+
+| Step | Deliverable | Gate |
+| :--- | :--- | :--- |
+| 6a. Human yardstick | Every ladder rating reports the win rate against human winner boards, with the style behind it | The number reproduces between runs, and every later step is judged by it |
+| 6b. Endgame school | A network trained with every model seat forced onto the standard leveling curve | Its boards grow several-fold on the forced curve, and Tier 5 and 6 engines appear |
+| 6c. Take the scaffold away | The same network trained with fewer and then no forced seats, with the school network kept in the pool | With no curve it still levels, holds its human win rate, and beats iteration 1870 head to head |
+| 6d. Lift the caps | A higher action cap, and board order re-tested on late boards | No loss of strength per hour of training |
+
+**6a. The human yardstick** (`yardstick.py`). Placement and the probe are relative to the field. The yardstick is the absolute mark.
+
+- It fights the agent's end-of-turn boards on turns 10 to 16 against a fixed set of human winner boards, in the combat simulator, at the published stats and at a tenth of them. The second number moves while the first is still near zero.
+- The boards are data (`rl/seaglass_rl/data/human_boards/`). The first set is the 13 example winner boards from hspulse.net's comp pages for this patch. Boards from real game logs should replace it: `replay/` already rebuilds a game from a `Power.log`, and the Season 14 logs have to be saved before Patch 37.2 on 2026-12-01.
+- A rating also reports the board's total stats and its Tier 5 and 6 minions by turn, and the minion types of the agent's last boards.
+- **The gate number** is the win rate on turn 13 at the published stats.
+
+**6b. Endgame school** (`curriculum.py`, `train_lobby --force-curve standard`). Every model seat is put on the standard curve by the environment: Tier 2 on turn 2, 3 on 5, 4 on 7, 5 on 9 and 6 on 11.
+
+- Whenever a forced seat is below the curve and the Tavern upgrade is legal, the environment takes the upgrade. It is not one of the policy's decisions and is not recorded, so PPO does not train on it.
+- Every model seat pays the same cost, so nobody is punished for leveling, and the learner spends turns 9 and later in Tier 5 and 6 shops against boards built there.
+- The curve is a hand-written play rule. It is scaffolding in the same sense as the rule-bot warm start: `--pure` refuses it, and step 6c removes it.
+- The run continues from iteration 1870 with the capacity test's recipe, a higher learning rate (the old one had annealed to zero) and a higher action cap.
+- **If the boards grow several-fold and engines appear,** exploration was the block. Go to 6c.
+- **If nothing changes with the whole lobby on Tier 6,** the block is structural: the action cap, the card representation, or credit across five or more turns. Lift the cap further (6d), add the auxiliary head that predicts the board's strength a few turns ahead (`--aux-coef`), and repeat.
+
+**6c. Take the scaffold away** (`--force-share`). A network that was always leveled by the environment has never had to choose to level.
+
+- Train on with half the model seats forced, then none. An unforced seat that is below the curve can tell it is on its own, so the policy can learn what leveling is worth there.
+- Keep the endgame-school network in the opponent pool at 15% to 25% of seats, on its curve, so the learner keeps meeting boards that scale.
+- A checkpoint trained with some seats unforced is rated with no curve. That is the only rating that says whether a network levels by itself.
+- **Gate.** With no curve: mean Tier 4.5 or more on turn 10, the human win rate of 6b held, and a head-to-head win over iteration 1870.
+- **If it slides back to Tier 2 and still wins,** the engine's balance of damage and tempo is the next suspect. Compare lobby length and damage per turn with the human logs: the network's lobbies last 17.4 turns, and the published human winners finish on turns 12 to 15.
+
+**6d. Lift the caps.** The checkpoints so far were trained with at most 30 decisions a turn, and that cap already binds in 5% to 8% of turns 8 to 12. The top human comps of this patch take many actions a turn. Board order is also outside the policy (`--no-reposition`), and the position solver was off because it measured no gain on Tier 2 stat piles. Raise the cap toward the engine's own turn timer and measure the cost, and re-test `--auto-position` on boards with Taunts, cleaves and Deathrattle engines.
+
+**After this stage.** Return to search and distillation. A critic that has seen engines pay has something for the search to find and for distillation to pass on. Until then the search stays at its current default.
+
+**Not worth more time before then:** more iterations of the current recipe, a bigger network, more search knobs, or a longer search horizon scored by the same critic.
+
+**The patch.** The engine models Patch 37.0.2. Patch 37.2 (Season 15) goes live on 2026-12-01 and removes Trinkets and Dark Gifts. This stage finishes on 37.0.2: a method that finds engines on one patch should find them on the next, and the hours from scratch to the gate are the cost of a new patch.
+
+#### Stage 6 Progress (2026-11-27): the yardstick and the school are built
+
+**6a is built.** `ladder rate`, `ladder versus` and the trainer's check now report the human win rate, the board's stats and Tier 5 and 6 minions by turn, and the minion types of the last boards. The baselines on the fast ladder, 500 lobbies each:
+
+| Agent | Place | Tier on turns 7 / 10 / 13 | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | 1.77 ± 0.05 | 2.6 / 2.9 / 4.0 | 1,478 | 1.4 | 1.6% | 21.8% |
+| Iteration 1870, another seed | 1.75 ± 0.05 | 2.6 / 2.9 / 3.9 | 1,446 | 1.3 | 1.5% | 21.6% |
+| Iteration 1870 on the standard curve | 1.99 ± 0.07 | 4.0 / 5.0 / 6.0 | 1,316 | 2.6 | 1.2% | 19.8% |
+| 9kgamerbot | 4.31 ± 0.14 | 4.0 / 5.4 / 6.0 | 642 | 2.6 | 0.1% | 8.2% |
+
+- **The gate number reproduces.** Two seeds give 1.6% and 1.5% at the published stats, and 21.8% and 21.6% at a tenth of them. The review measured 2.6% in lobbies of the network against itself, where boards grow a little larger than against the rule bots.
+- **The starting line for 6b is the third row.** Put on the curve with no training, the network holds twice the Tier 5 and 6 minions and builds a slightly weaker board with them.
+- **Its last boards are 41% Mechs, 22% Pirates and 18% Dragons.** Beasts, Murlocs, Quilboar, Elementals and Aberrations are each 1% or less. 9kgamerbot's are spread over all ten types.
+
+**6b is built.** `train_lobby --force-curve standard` passes its tests (`rl/tests/test_endgame_school.py`), and six iterations on CPU from iteration 1870 ran clean, with every model seat on Tier 4 on turn 7 and Tier 6 on turn 11.
+
+- **The first run** (`runs/school/a` on the Mac mini): `--init` from iteration 1870, `--force-curve standard`, `--max-steps-per-turn 80`, `--lr 1e-4` held constant, `--p-bot 0.15`, 64 lobbies an iteration, and a check every 25 iterations. An iteration takes about 14 seconds there, so the run is set to 2,400 iterations or 10 hours, whichever comes first. The capacity test fine-tuned at 2e-5 annealed to zero and held its style. This run has to change its style, which is why it started with a fresh optimizer at 1e-4.
+- **What to read.** The win rate against human boards on turn 13, the median board stats, the Tier 5 and 6 minions on the board, and the minion types. Place on the fast ladder is expected to slip and is not the measure here.
+- **Its first check found a bug.** With `--replays` the check keeps replays, and the forced upgrade passed a replay note the engine does not take. The run stopped at iteration 25. The forced upgrade and the automatic reorder now carry the engine's `forced` note (commit `332387d`), and the run continued from its saved iteration 25 with `--resume`.
+- **Its second check found a combat that never ends.** A `Heroic Broodmother` with the `Invulnerability` Dark Gift takes no damage while attacking and gets its Divine Shield back on every attack. Against a human board with thousands of Health it can neither die nor win, and the engine had no limit on combat length, so the fight ran until the worker ran out of memory and the check waited for it forever. The engine now calls a combat a draw after 1,000 attack turns ([`engine/docs/combat.md`](../engine/docs/combat.md) §5.2). The same fight can come up between two late boards in a lobby, so this guards the training games too. The run continued from its saved iteration 50.
+- **A worker that dies now stops the run.** `multiprocessing.Pool` waits forever for the task of a worker that died, which is how the endless combat became a silent hang. `Player.play` now raises instead.
+
+**Run A went the wrong way, and its learning rate is why.** Its checks on the curve, 500 lobbies each:
+
+| Iteration | Place | Win rate against human boards, turn 13 | Same, human stats at 10% | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Start (iteration 1870 on the curve) | 1.99 | 1.2% | 19.8% | 1,316 | 2.6 |
+| 75 | 1.95 | 1.1% | 19.0% | 1,244 | 2.5 |
+| 100 | 2.06 | 1.0% | 18.6% | 1,256 | 2.2 |
+| 150 | 2.03 | 0.8% | 16.0% | 1,078 | 1.9 |
+| 200 | 2.03 | 0.8% | 16.4% | 1,092 | 1.9 |
+| 250 | 2.10 | 0.5% | 14.1% | 1,000 | 1.5 |
+
+- **The policy re-heated.** Its entropy rose from 0.46 to 0.57 in 100 iterations. That is the entropy `runs/stage2-tf` held at a constant 1e-4, with a ladder place near 2.0. The later runs cooled the network at 5e-5 and 2e-5, annealed, to an entropy of 0.49 and a place of 1.72. A constant 1e-4 undoes that cooling, and whatever the school teaches cannot be read under it.
+- **It did learn to level.** Rated with no curve, the iteration-250 network is on Tier 3.1, 3.9 and 5.7 on turns 7, 10 and 13, against 2.6, 2.9 and 4.0 for the starting network, and on Tier 6 on turn 15. Its boards are weaker: 929 median stats on turn 13 and 0.3% against human boards, for a place of 2.05 ± 0.07.
+- **Run A was stopped at iteration 278.** Its files are kept in `runs/school/a`.
+
+**Run B closed the cost of the curve and did not find engines.** `runs/school/b` started from iteration 1870 again with `--lr 5e-5 --anneal-lr` over 1,800 iterations and everything else as in run A. It ran all 1,800 iterations (115,200 lobbies) in 7.6 hours. Its checks on the curve, averaged over 300 iterations (12 checks of 500 lobbies):
+
+| Iterations | Place | Win rate against human boards, turn 13 | Same, human stats at 10% | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Dragons among the last boards | Policy entropy |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 to 300 | 1.97 | 1.2% | 19.7% | 1,238 | 2.2 | 25% | 0.52 |
+| 301 to 600 | 2.03 | 1.2% | 19.1% | 1,181 | 2.1 | 27% | 0.53 |
+| 601 to 900 | 2.02 | 1.3% | 19.6% | 1,206 | 2.1 | 27% | 0.54 |
+| 901 to 1,200 | 1.90 | 1.4% | 20.3% | 1,227 | 2.3 | 30% | 0.53 |
+| 1,201 to 1,500 | 1.84 | 1.5% | 21.6% | 1,304 | 2.3 | 29% | 0.54 |
+| 1,501 to 1,800 | 1.79 | 1.6% | 22.4% | 1,355 | 2.4 | 30% | 0.55 |
+
+Its last network on the fast ladder, 500 lobbies each. The school plays with a cap of 80 actions a turn, so the starting network was rated again with that cap:
+
+| Network | Curve | Place | Tier on turns 7 / 10 / 13 | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | standard | 1.90 ± 0.07 | 4.0 / 5.0 / 6.0 | 1,314 | 2.6 | 1.2% | 19.9% |
+| Iteration 1870, another seed | standard | 1.98 ± 0.08 | 4.0 / 5.0 / 6.0 | 1,276 | 2.6 | 1.2% | 19.9% |
+| Run B, iteration 1800 | standard | 1.77 ± 0.05 | 4.0 / 5.0 / 6.0 | 1,397 | 2.5 | 1.8% | 23.1% |
+| Run B, iteration 1800, another seed | standard | 1.78 ± 0.06 | 4.0 / 5.0 / 6.0 | 1,294 | 2.5 | 1.6% | 22.2% |
+| Iteration 1870 | none | 1.74 ± 0.05 | 2.6 / 2.9 / 4.0 | 1,464 | 1.4 | 1.7% | 21.7% |
+| Run B, iteration 1800 | none | 1.78 ± 0.05 | 2.6 / 3.0 / 4.3 | 1,238 | 1.0 | 1.1% | 18.6% |
+
+Head to head against iteration 1870 with no curve, four seats each, 400 lobbies (`ladder versus`):
+
+| Four seats of | Their place | Iteration 1870's place | Gap to 4.5 (positive is worse) |
+| :--- | :--- | :--- | :--- |
+| Iteration 1870 on the curve | 5.01 | 3.99 | +0.51 ± 0.08 |
+| Run B's last network on the curve | 4.57 | 4.43 | +0.07 ± 0.09 |
+| Run B's last network with no curve | 4.63 | 4.37 | +0.13 ± 0.09 |
+
+- **The curve no longer costs places.** Put on the curve with no training, the starting network lost half a place to itself. After the school it is level. On the fast ladder it places 1.77 on the curve, where the starting network places 1.90 to 1.98 on the curve and 1.74 off it.
+- **Against human boards it gained half a point.** It wins 1.6% to 1.8% on turn 13, from 1.2% on the curve, and 22% to 23% against human boards at a tenth of their stats, from 19.9%. That is where the starting network stands off the curve (1.7% and 21.7%).
+- **The 6b gate is not met.** The gate asked for boards that grow several-fold and for Tier 5 and 6 engines. The median board on turn 13 holds 1,294 to 1,397 stats against 1,276 to 1,314 before, and 2.5 Tier 5 and 6 minions against 2.6.
+- **The gains came late and had not stopped.** The first 900 iterations, with the learning rate between 5e-5 and 2.5e-5, are level with the start. Each 300 iterations after that gained on every measure, and the last check is the best one.
+- **It does not level by itself.** With no curve it is on Tier 2.6, 3.0 and 4.3 on turns 7, 10 and 13, as the starting network is, and its boards are weaker than the starting network's. It never chose an upgrade in training, so this is step 6c's question.
+- **The trainer's last check and the cloud rating agree to the digit** (1.77, 1.8%, 23.1%, 1,397), so a Mac checkpoint can be rated in either place.
+
+**What the networks buy on Tier 6** (`rl/scripts/review/shoptake.py`, 120 lobbies of eight seats on the standard curve, shops seen with 3 or more Gold):
+
+| Network | Tier 5 minions bought, of those offered on Tavern Tier 6 | Tier 6 minions bought | Tier 5 and 6 cards bought at least 1 time in 10, of 85 | Volumizers bought |
+| :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870 | 1.9% | 3.3% | 8 | 67% to 75% |
+| Run A, iteration 250 | 0.6% | 2.2% | 4 | 36% to 42% |
+| Run B, iteration 230 | 2.2% | 4.2% | 11 | 45% to 49% |
+| Run B, iteration 1800 | 3.3% | 6.1% | 10 | 51% to 66% |
+
+- **On Tier 6 the starting network passes on almost every high-tier minion.** It buys 8 of the 85 Tier 5 and 6 cards it is shown with any regularity (`Falling Sky Golem`, `Hopebringer`, `Charging Czarina`, `Crimson Vindicator`, `Resourceful Robot` and three more) and never buys most of the rest. It still buys two of every three Volumizers.
+- **Run B is moving toward Dragons.** By iteration 230, `Crimson Vindicator` went from 36% to 59%, `Bronze Timewalker` from 1% to 16%, `Persistent Poet` from 4% to 18%, `Firescale Hoarder` from 0% to 12%, `Felfire Conjurer` from 10% to 19% and `Heroic Broodmother` from 3% to 11%. The Volumizers fell from about 70% to about 47%. Its checks on the curve are level with the starting line so far (1.1% to 1.4% against human boards), so the new buys have not yet made stronger boards.
+- **Run A unlearned.** Its take rates fell across the board, which fits the re-heating.
+- **Run B's last network buys more of the same cards.** `Crimson Vindicator` ends at 96%, `Hopebringer` at 88% (from 62%), `Falling Sky Golem` at 86% (from 71%), `Charging Czarina` at 74% (from 57%), `Eternal Summoner` at 30% (from 14%) and `Heroic Broodmother` at 26%. The cards it tried at iteration 230 are back under 6%: `Bronze Timewalker` 1%, `Persistent Poet` 5%, `Firescale Hoarder` 1%. It never buys 51 of the 85 Tier 5 and 6 cards, the same count as the starting network (41 at iteration 230).
+
+The counts are in [`docs/results/stage6/`](results/stage6/) (`shoptake_*.json`).
+
+**What wins a place in a school lobby** (`rl/scripts/review/whatwins.py`, 400 lobbies of eight seats of one network, every seat still alive on turn 11, by quarter of board stats from weakest to strongest):
+
+| Network | Seats alive on turn 11, of 3,200 | Lobby length, turns | Median board stats by quarter | Final place by quarter | Rank correlation with place: board stats | Same: Tier 5 and 6 minions |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Iteration 1870, no curve | 2,700 | 17.5 | 562 / 849 / 1,165 / 1,652 | 5.02 / 4.36 / 3.74 / 2.58 | -0.47 | -0.14 |
+| Iteration 1870 on the curve | 2,420 | 15.9 | 452 / 667 / 899 / 1,278 | 4.53 / 4.08 / 3.40 / 2.40 | -0.45 | -0.16 |
+| Run B, iteration 790, on the curve | 2,406 | 15.6 | 407 / 640 / 903 / 1,337 | 4.53 / 4.00 / 3.43 / 2.37 | -0.45 | -0.20 |
+| Run B, iteration 1800, on the curve | 2,430 | 15.8 | 464 / 719 / 978 / 1,394 | 4.52 / 4.01 / 3.37 / 2.52 | -0.43 | -0.12 |
+
+| Tier 5 and 6 minions on the board, turn 11 | 0 | 1 | 2 | 3 | 4 or more |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Final place, iteration 1870 on the curve | 4.11 | 3.83 | 3.63 | 3.47 | 3.04 |
+| Final place, run B at iteration 790 | 4.08 | 3.79 | 3.36 | 3.16 | 2.96 |
+| Median board stats, run B at iteration 790 | 607 | 732 | 822 | 891 | 933 |
+
+- **The size of the board on turn 11 decides the place far more than what is on it.** The strongest quarter of boards finishes two places ahead of the weakest. Four high-tier minions against none is worth about one place, and those boards are also half again as large, so part of that place is stats.
+- **The curve makes the boards smaller and the lobby shorter.** The Gold for the upgrades comes out of the board: every quarter holds about 20% fewer stats on turn 11, 780 seats are dead by then against 500, and the lobby ends on turn 15.9 against 17.5.
+- **A school lobby ends about five turns after the curve reaches Tier 6.** In those turns the larger board wins now, and a board that would scale has no time to. The curve puts the network in front of the Tier 6 shop, but the reward in a lobby of tempo boards still goes to tempo.
+- **High-tier minions paid a little more in the middle of run B, and not at its end.** Their rank correlation with place went from -0.16 to -0.20 at iteration 790 and is -0.12 for the last network. Its boards on turn 11 are 3% to 9% larger than the starting network's in every quarter.
+- **Dragons place best with the smallest boards.** Dragon boards finish at 3.34 to 3.40 on a median of about 590 stats, and Mech boards at 3.50 to 3.53 on 900 to 970. Total stats under-read what Dragons do in combat. Run B plays more of them: 693 Dragon seats alive on turn 11 against 507.
+
+The counts are in `whatwins_*.json` in the same folder. The no-curve row was played with the plain cap of 30 actions a turn, and the curve rows with the school's 80.
+
+**What Stage 6b says.** Leveling was not what kept the network from the late game. On Tier 6 it plays the game it already knew, a little better, with ten high-tier cards.
+
+- **The school taught play from Tier 6, and nothing wider.** The cost of the curve is gone, the take rates on Tier 6 nearly doubled, and the cards behind that are the ones the starting network already bought.
+- **A lobby of these boards pays for the board that is larger now.** It ends about five turns after the curve reaches Tier 6. A card that pays later, or only next to two others, is worth less than a Volumizer in the turns that are left, so the cards tried in the warm first half of run B were dropped again.
+- **The plan's next step for this case was the auxiliary head and a higher cap.** The measurements point at something narrower: 51 of 85 high-tier cards are never bought, and five of the ten minion types together make up under 1% of its last boards. The network has no games in which those cards could pay.
+- **Three ways forward are open, and the choice is James's:** a second scaffold that makes each school seat play one minion type, so that it has to make that type's cards work; learning from human games, which needs Season 14 logs saved before 2026-12-01 and puts human data on the training path; or step 6c with the network as it is. James chose the first on 2026-11-27, with no human data.
+
+**In a lobby of one minion type the network is strong in three types and lost in the rest** (`rl/scripts/review/bytype.py`, 400 lobbies of eight seats on the curve, each lobby's shop holding one type and the typeless minions; boards on turn 13):
+
+| The lobby's type | Median board stats, iteration 1870 | Same, run B's last network | Win rate against human boards, iteration 1870 | Same, run B's last network | Boards of the lobby's type, run B's last network |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 2,859 | 3,225 | 4.5% | 6.3% | 100% |
+| Dragon | 1,274 | 1,732 | 4.3% | 5.3% | 100% |
+| Pirate | 1,661 | 2,268 | 1.7% | 3.6% | 91% |
+| Demon | 1,472 | 1,533 | 1.2% | 1.4% | 75% |
+| Elemental | 1,215 | 1,483 | 0.6% | 1.2% | 55% |
+| Aberration | 1,207 | 1,281 | 0.2% | 0.6% | 52% |
+| Murloc | 1,030 | 1,266 | 0.5% | 0.9% | 53% |
+| Quilboar | 1,224 | 1,162 | 0.6% | 0.9% | 48% |
+| Undead | 1,060 | 1,070 | 0.2% | 0.6% | 78% |
+| Beast | 728 | 856 | 0.4% | 0.4% | 47% |
+| Mean over the types | 1,373 | 1,588 | 1.4% | 2.1% | 70% |
+
+- **The school's gain shows more clearly here.** With only Mechs in the shop, run B's last network wins 6.3% against human boards on turn 13, and 49% against them at a tenth of their stats.
+- **In six types its boards are weak.** With only Beasts in the shop its median board holds 856 stats on turn 13, a quarter of its Mech board, and half its boards there are a typeless pile. The published human Beast board holds about 52,000.
+- **A one-type lobby is a place where those cards can pay.** Every seat is equally lost in a Beast lobby, so the first seat to make Beasts work wins it. That is the incentive the five-type lobby does not give, because Mechs, Dragons or Pirates are almost always on offer there.
+- **`train_lobby --school-tribes 1:0.5` plays half the training lobbies with one type** (the type school, `curriculum.py`). The check stays on the five-type ladder.
+
+**In a one-type lobby the network does not buy the type** (`shoptake.py --tribes 1`, 150 lobbies on the curve, minions offered from turn 9 on in shops seen with 3 or more Gold). The seven weak types are Aberration, Beast, Demon, Elemental, Murloc, Quilboar and Undead:
+
+| Network | Minions of the lobby's type bought, weak types | Same, Tier 5 and 6 only | Same, Beast lobbies, Tier 5 and 6 | Minions of the lobby's type bought, Mech, Dragon and Pirate | Shop minions seen per lobby | Tier 5 and 6 cards never bought |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Run B, iteration 790 | 0.7% | 1.5% | 0.1% | 5.4% | 832 | 44 of 80 |
+| Run B, iteration 1800 | 1.6% | 3.7% | 0.5% | 4.9% | 695 | 43 of 78 |
+| Run D (type school), iteration 650 | 0.4% | 0.9% | 0.1% | 3.6% | 965 | 63 of 82 |
+| Run D (type school), iteration 1175 | 1.0% | 1.9% | 0.5% | 4.1% | 881 | 49 of 81 |
+
+- **With only Beasts in the shop, run B's last network buys 6 of the 1,135 Tier 5 and 6 Beasts it is shown** and none of 3,429 lower Beasts. It rolls and buys Tavern spells for the board it has: from turn 9 on in Beast lobbies, 32% of its actions are rolls, 12% buy a spell and 1% buy a minion.
+- **Its board is full by turn 8, so a new minion replaces a grown one.** A Tier 6 minion off the shelf holds fewer stats than a Tier 2 minion with four turns of buffs on it. It is worth the slot only as an engine, over turns the lobby does not last.
+- **Run D, the first type school run, tries fewer of these cards, not more.** (`runs/school/d` on the Mac mini, from run B's last network, `--school-tribes 1:0.5`, otherwise as run B.) At iteration 650 its weak-type boards were 10% to 35% larger than run B's at iteration 790, and it got them by rolling more and buying less. Its checks on the five-type ladder dipped to 0.8% against human boards and came back along run B's shape, to 1.16% at iteration 1175, where run B was at 1.45%.
+- **At two thirds of the run its one-type boards are 5% larger than run B's last network's, with the same share of typed boards.** The mean over the types is 1,669 stats on turn 13 against 1,588, and 70% of its boards are of the lobby's type, as before. It buys 1.0% of the lobby's minions in the weak types, where run B's last network buys 1.6%. A shop of one type alone does not make it buy the type.
+
+**A one-type shop needs a buy limit to teach the type** (`train_lobby --school-buys own`, `PlayOptions.school_buys`). A model seat of a school lobby can buy only minions of the lobby's types, so no Tavern spell and no typeless minion. The limit masks Buy actions, so every decision is still the policy's own and is trained on as usual. Rule bots, the five-type lobbies and every check are not limited. Run B's last network under the limit, before any training with it (`bytype.py --tribes 1 --buys own`, the same 400 lobbies; `--buys minions` allows every minion and no spell; boards on turn 13):
+
+| The lobby's type | Median board stats, no limit | Same, only minions | Same, only the lobby's type | Boards of the lobby's type, no limit | Same, only the lobby's type |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,225 | 3,275 | 3,512 | 100% | 100% |
+| Dragon | 1,732 | 1,548 | 1,485 | 100% | 100% |
+| Pirate | 2,268 | 1,717 | 1,521 | 91% | 99% |
+| Demon | 1,533 | 1,480 | 1,464 | 75% | 99% |
+| Elemental | 1,483 | 1,323 | 1,157 | 55% | 89% |
+| Aberration | 1,281 | 967 | 653 | 52% | 84% |
+| Murloc | 1,266 | 953 | 668 | 53% | 85% |
+| Quilboar | 1,162 | 1,012 | 1,218 | 48% | 94% |
+| Undead | 1,070 | 889 | 899 | 78% | 98% |
+| Beast | 856 | 585 | 357 | 47% | 88% |
+| Mean over the types | 1,588 | 1,375 | 1,293 | 70% | 94% |
+
+- **Mech boards do not need spells or typeless minions.** They are 9% larger under the limit. Demon and Quilboar boards are level, Dragon boards lose 14% and Pirate boards a third.
+- **In the other types the board falls to what the type's cards are worth in this network's hands.** A Beast board holds 357 stats on turn 13, a tenth of a Mech board, and Aberration and Murloc boards about 650. The typeless pile and the spells were holding those boards up.
+- **Under the limit it buys more of the lobby's minions, and mostly it rolls** (`shoptake.py --tribes 1 --buys own`, 150 lobbies, from turn 9 on). In the seven weak types it buys 5.9% of the Tier 5 and 6 minions of the lobby's type it is shown, against 3.7% with no limit, and 1.5% of the lower ones, against 0.8%. In Beast lobbies it buys 49 of 1,530 high-tier Beasts and none of 4,412 lower ones, 57% of its actions are rolls and 1% buy a minion. 36 of 80 Tier 5 and 6 cards are never bought, against 43 of 78.
+- **That gap is what the school can teach.** Every model seat of a school lobby is limited alike, so nothing else on the shelf can stand in for the type's cards, and the seat that makes them work wins the lobby.
+- **Run E is run D with the limit** (`runs/school/e` on the Mac mini, started 2026-11-27 at 12:05 PM Pacific: `--school-tribes 1:0.5 --school-buys own --seed 3`, from run B's last network with the pool seeded with it, otherwise as run D). Run D was stopped at iteration 1207 of 1,800 to make room for it. Its snapshots are kept, so it can be resumed as the control.
+
+**Run E at a third of the way: under the limit the weak types' boards grow** (iteration 630 of 1,800; `bytype.py --tribes 1` with and without `--buys own`, the same 400 lobbies, boards on turn 13, against run B's last network, which run E started from):
+
+| The lobby's type | Median board stats under the limit, run B's last network | Same, run E at iteration 630 | Median board stats with no limit, run B's last network | Same, run E at iteration 630 | Win rate against human boards under the limit, run B's last network | Same, run E at iteration 630 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 3,151 | 3,225 | 3,286 | 6.2% | 5.6% |
+| Dragon | 1,485 | 1,421 | 1,732 | 1,607 | 5.3% | 4.4% |
+| Pirate | 1,521 | 1,682 | 2,268 | 1,993 | 1.0% | 2.0% |
+| Demon | 1,464 | 2,221 | 1,533 | 1,910 | 1.0% | 2.8% |
+| Elemental | 1,157 | 1,528 | 1,483 | 1,618 | 0.8% | 1.4% |
+| Aberration | 653 | 956 | 1,281 | 1,395 | 0.5% | 0.5% |
+| Murloc | 668 | 1,004 | 1,266 | 1,274 | 0.4% | 0.5% |
+| Quilboar | 1,218 | 3,317 | 1,162 | 2,110 | 1.1% | 3.6% |
+| Undead | 899 | 1,055 | 1,070 | 1,098 | 0.3% | 0.3% |
+| Beast | 357 | 570 | 856 | 827 | 0.4% | 1.0% |
+| Mean over the types | 1,293 | 1,691 | 1,588 | 1,712 | 1.7% | 2.2% |
+
+- **Under the limit all seven weak types build larger boards, by 17% to 172%.** Quilboar is the first type to work: its median board holds 3,317 stats, as much as a Mech board, from 1,218. Demon boards are half again as large, and Beast, Murloc and Aberration boards about half again from a low start.
+- **Some of it carries over to one-type lobbies with no limit.** There Quilboar boards hold 2,110 stats from 1,162 and Demon boards 1,910 from 1,533. The mean over the types is 8% above run B's last network, and 75% of boards are of the lobby's type, from 70%.
+- **It buys the lobby's minions twice as often** (`shoptake.py --tribes 1`, 150 lobbies, from turn 9 on, the seven weak types). Under the limit it takes 12.8% of the Tier 5 and 6 minions of the lobby's type it is shown, from 5.9%, and 3.2% of the lower ones, from 1.5%. With no limit it takes 6.3% and 1.6%, from 3.7% and 0.8%, and 4.4% of the high-tier Beasts, from 0.5%. With no limit 29 of 78 Tier 5 and 6 cards are never bought, from 43 of 78.
+- **The three strong types gave a little back,** as every run has in its warm first half: Mech and Dragon boards are 4% to 10% smaller under the limit.
+- **The five-type ladder has not moved yet.** The checks stand at place 1.89 and 1.0% to 1.1% against human boards at iteration 600, in the same dip runs B and D had there (2.08 and 1.2%, 2.01 and 0.8%). Runs B and D gained on the ladder only in their second half, so the last network decides.
+
+**Run E at two thirds: two types hold what they learned, and none of it leaves the school yet** (iteration 1190; the same measures, median board stats on turn 13):
+
+| The lobby's type | Under the limit, run B's last network | Same, run E at 630 | Same, run E at 1190 | No limit, run B's last network | Same, run E at 630 | Same, run E at 1190 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 3,151 | 4,029 | 3,225 | 3,286 | 4,010 |
+| Dragon | 1,485 | 1,421 | 1,728 | 1,732 | 1,607 | 1,976 |
+| Pirate | 1,521 | 1,682 | 1,790 | 2,268 | 1,993 | 2,082 |
+| Demon | 1,464 | 2,221 | 2,226 | 1,533 | 1,910 | 2,126 |
+| Elemental | 1,157 | 1,528 | 1,356 | 1,483 | 1,618 | 1,669 |
+| Aberration | 653 | 956 | 977 | 1,281 | 1,395 | 1,391 |
+| Murloc | 668 | 1,004 | 1,116 | 1,266 | 1,274 | 1,472 |
+| Quilboar | 1,218 | 3,317 | 3,141 | 1,162 | 2,110 | 1,792 |
+| Undead | 899 | 1,055 | 866 | 1,070 | 1,098 | 1,135 |
+| Beast | 357 | 570 | 490 | 856 | 827 | 738 |
+| Mean over the types | 1,293 | 1,691 | 1,772 | 1,588 | 1,712 | 1,839 |
+
+- **The weak types' gains came in the warm first third and then stopped.** Quilboar, Demon, Murloc and Aberration hold theirs. Undead, Beast and Elemental gave part back. The mean still rose, because Mech and Dragon came back: a Mech board holds 4,029 stats under the limit, from 3,512.
+- **With free buying it builds a smaller Quilboar board than under the limit.** In a Quilboar lobby with no limit its median board holds 1,792 stats and 60% of its boards are Quilboar boards. Under the limit they hold 3,141 and 99% are. The limit masks the buys of spells and typeless minions, so the policy is never trained on the choice between those and the type's minions. With the mask off, its old preference for them is still there.
+- **In lobbies of two and five types it does not play the new types** (`rl/scripts/review/boardtypes.py`, 400 lobbies with no limit, seats alive on turn 13, the board's type by `play.board_type`):
+
+| Boards of the type, of the seats in a lobby that has it | Two-type lobbies, run B's last network | Same, run E at 1190 | Five-type lobbies, run B's last network | Same, run E at 1190 |
+| :--- | :--- | :--- | :--- | :--- |
+| Quilboar | 10.6% | 9.3% | 0.5% | 0.1% |
+| Demon | 30.2% | 38.4% | 3.6% | 2.9% |
+| Elemental | 14.4% | 33.1% | 0.6% | 1.3% |
+| Undead | 37.4% | 48.8% | 3.7% | 5.9% |
+| Mech | 95.7% | 97.7% | 70.8% | 75.7% |
+| Boards of no type, of all seats | 21.1% | 14.6% | 11.9% | 15.2% |
+| Median board stats, all seats | 1,742 | 1,846 | 1,798 | 1,744 |
+
+- **Next to another type, Quilboar is played by 9% of the seats that could, as before the school.** Demon, Elemental and Undead boards are more common in two-type lobbies and typeless boards rarer, and the median board there is 6% larger. In five-type lobbies nothing has changed: Mech, Dragon or Pirate is on offer in 92% of them, and the network takes those.
+- **The five-type ladder says the same.** The checks stand at place 1.85 and 1.2% against human boards at iteration 1175, where run B had 1.90 and 1.45%.
+- **Seat for seat, the school closed most of the gap between its type play and its free play** (`rl/scripts/review/freeseats.py`, 400 one-type lobbies, four seats under the limit against four free seats of the same network; average place, and for run E the median board stats on turn 13):
+
+| The lobby's type | Run B's last network, free seats | Same, limited seats | Run E at 1190, free seats | Same, limited seats | Run E at 1190, board stats of free seats | Same, limited seats |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 4.13 | 4.87 | 4.30 | 4.70 | 3,770 | 3,544 |
+| Dragon | 3.71 | 5.29 | 4.31 | 4.69 | 1,810 | 1,736 |
+| Pirate | 3.34 | 5.66 | 3.81 | 5.19 | 1,930 | 1,921 |
+| Demon | 3.57 | 5.43 | 4.98 | 4.02 | 2,074 | 2,135 |
+| Elemental | 3.50 | 5.50 | 4.42 | 4.58 | 1,562 | 1,378 |
+| Aberration | 2.98 | 6.02 | 3.45 | 5.55 | 1,254 | 1,007 |
+| Murloc | 3.16 | 5.84 | 3.50 | 5.50 | 1,226 | 1,318 |
+| Quilboar | 3.47 | 5.53 | 4.65 | 4.35 | 1,846 | 2,916 |
+| Undead | 4.49 | 4.51 | 4.99 | 4.01 | 1,089 | 985 |
+| Beast | 3.36 | 5.64 | 4.58 | 4.42 | 826 | 591 |
+| Mean over the types | 3.57 | 5.43 | 4.30 | 4.70 | | |
+
+- **Before the school the limited seats lost in every type, by almost a place on average. Now they win in four.** In Demon, Undead, Quilboar and Beast lobbies the seats that can buy only the type place ahead of the seats that buy freely, so there the network plays the type better than it chooses to. In Aberration, Murloc and Pirate lobbies free buying is still more than a place ahead.
+- **The next step takes the limit away seat by seat** (`train_lobby --school-buys-share`, `GameSpec.free_units`). Each unit of a school lobby is left off the limit with chance one minus the share. A free seat sits next to limited seats that play the type, and its buys of spells and typeless minions are now trained against the type's minions, with the play that follows them already learned. Lobbies of two types (`--school-tribes 1:0.3,2:0.2`) carry the choice between types toward the five-type lobby.
+
+**Run E's last network: it plays every type better, and the five-type game does not show it yet** (all 1,800 iterations, 7.5 hours; one-type lobbies as above, boards on turn 13; the last two columns are the average place of four seats under the limit against four free seats of the same network, `freeseats.py`):
+
+| The lobby's type | Board stats under the limit, run B's last network | Same, run E's | Board stats with no limit, run B's last network | Same, run E's | Win rate against human boards with no limit, run B's last network | Same, run E's | Place of the limited seats, run B's last network | Same, run E's |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 4,258 | 3,225 | 3,684 | 6.3% | 6.4% | 4.87 | 4.45 |
+| Dragon | 1,485 | 1,656 | 1,732 | 2,053 | 5.3% | 5.9% | 5.29 | 4.71 |
+| Pirate | 1,521 | 1,862 | 2,268 | 2,142 | 3.6% | 3.7% | 5.66 | 4.93 |
+| Demon | 1,464 | 2,161 | 1,533 | 2,342 | 1.4% | 2.7% | 5.43 | 4.34 |
+| Elemental | 1,157 | 1,601 | 1,483 | 1,756 | 1.2% | 2.7% | 5.50 | 4.39 |
+| Aberration | 653 | 1,112 | 1,281 | 1,510 | 0.6% | 1.0% | 6.02 | 5.14 |
+| Murloc | 668 | 1,213 | 1,266 | 1,646 | 0.9% | 2.0% | 5.84 | 4.87 |
+| Quilboar | 1,218 | 4,430 | 1,162 | 2,505 | 0.9% | 3.3% | 5.53 | 4.15 |
+| Undead | 899 | 1,016 | 1,070 | 1,241 | 0.6% | 0.6% | 4.51 | 3.89 |
+| Beast | 357 | 687 | 856 | 960 | 0.4% | 1.7% | 5.64 | 4.20 |
+| Mean over the types | 1,293 | 2,000 | 1,588 | 1,984 | 2.1% | 3.0% | 5.43 | 4.51 |
+
+- **Under the limit every type's board is larger, and Quilboar boards are 3.6 times as large.** A Quilboar board holds 4,430 stats, more than a Mech board. Beast, Murloc and Aberration boards are 1.7 to 1.9 times as large, Demon and Elemental boards 1.4 to 1.5 times.
+- **With no limit the one-type boards are 25% larger on average,** and they win 3.0% against human boards, from 2.1% (32% from 26% at a tenth of the human stats). Quilboar boards doubled and Demon boards are half again as large.
+- **Limited seats are now level with free seats.** Before the school a seat that could buy only the lobby's type finished at 5.43 on average against free seats of the same network. Now it finishes at 4.51, and ahead of them in Undead, Quilboar, Beast, Demon, Elemental and Mech lobbies. In those six types the network plays the type better than it chooses to.
+- **It buys the lobby's minions three times as often.** In the weak types with no limit it takes 5.5% of the lobby's minions it is shown from turn 9 on, from 1.6%, and 10.9% of the Tier 5 and 6 ones, from 3.7%. 22 of 76 Tier 5 and 6 cards are never bought, from 43 of 78.
+
+On the five-type ladder (fast ladder, 500 lobbies) it is level with run B's last network in place and a little behind in boards:
+
+| Network | Curve | Place | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Run B, iteration 1800 | standard | 1.77 ± 0.05 | 1,397 | 2.5 | 1.8% | 23.1% |
+| Run B, iteration 1800, another seed | standard | 1.78 ± 0.06 | 1,294 | 2.5 | 1.6% | 22.2% |
+| Run E, iteration 1800 | standard | 1.73 ± 0.05 | 1,347 | 2.2 | 1.5% | 21.6% |
+| Run E, iteration 1800, another seed | standard | 1.78 ± 0.05 | 1,208 | 2.2 | 1.2% | 19.8% |
+| Run B, iteration 1800 | none | 1.78 ± 0.05 | 1,238 | 1.0 | 1.1% | 18.6% |
+| Run E, iteration 1800 | none | 1.81 ± 0.05 | 1,137 | 0.8 | 0.8% | 16.4% |
+
+- **Head to head against iteration 1870 with no curve it is level, as run B's was** (+0.08 ± 0.09, four seats each over 400 lobbies; run B's last network: +0.07 ± 0.09).
+- **In five-type lobbies it still plays Mech, Dragon and Pirate.** Quilboar boards are 0.5% of the seats in a lobby that has Quilboars, as before, and the median board on turn 13 holds 1,764 stats against 1,798 (`boardtypes.py --tribes 5`).
+- **In two-type lobbies the lesson shows.** The median board holds 1,972 stats, from 1,742. Elemental boards went from 14% to 35% of the seats that could play them, Beast boards from 12% to 25%, Undead from 37% to 47% and Demon from 30% to 39%, and boards of no type fell from 21% to 13%. Quilboar stays at 11%.
+- **What this says.** The buy limit works as a teacher: in five of the seven weak types the network now plays the type at least as well as it plays with free buying, and in all seven its boards are larger. What it has not learned is to choose them. In a five-type lobby one of its three old types is on offer nine times in ten, and nothing there asks it to compare.
+
+**Run F takes the limit away seat by seat** (`runs/school/f` on the Mac mini, started 2026-11-27 at 7:39 PM Pacific from run E's last network: `--school-tribes 1:0.3,2:0.2 --school-buys own --school-buys-share 0.5 --seed 4`, 2,400 iterations, otherwise as run E). Half the units of a school lobby buy freely next to limited ones, and two lobbies in ten have two types. It is judged by the one-type boards with no limit, by which types are played in two-type and five-type lobbies, and by the five-type ladder.
+
+**What the limit takes away is the Tavern spell** (measured in the cloud on run E's last network while run F trains). Could a seat simply be told which type to play? In five-type lobbies that offer a type, two seats can buy only that type's minions and no Tavern spell from a given turn on, and six seats of the same network buy freely (`committed.py`, 160 lobbies a cell; average place of the two committed seats, with the six free seats' place in brackets):
+
+| The type | Committed from turn 1 | From turn 6 | From turn 8 |
+| :--- | :--- | :--- | :--- |
+| Quilboar | 6.69 (3.77) | 5.78 (4.07) | 5.28 (4.24) |
+| Demon | 6.71 (3.76) | 5.76 (4.08) | 5.40 (4.20) |
+| Undead | 6.33 (3.89) | 5.56 (4.15) | 5.32 (4.23) |
+| Elemental | 6.81 (3.73) | 5.88 (4.04) | 5.34 (4.22) |
+
+The cost from turn 8 splits into its two halves (`--limit type` and `--limit spells`):
+
+| What the two seats cannot buy from turn 8 | Quilboar lobbies | Demon lobbies |
+| :--- | :--- | :--- |
+| Minions of other types, and Tavern spells | 5.28 (4.24) | 5.40 (4.20) |
+| Minions of other types | 4.62 (4.46) | 4.61 (4.46) |
+| Tavern spells | 4.73 (4.42) | 4.86 (4.38) |
+
+- **A seat cannot commit from the first turn.** It finishes near seventh, and 23 to 53 of the 320 committed seats are alive on turn 13, against 56% to 59% of the free seats. One type is too thin in a five-type shop to build the early board from.
+- **From turn 8 the type costs little, the spells cost more, and the two together cost a place.** A seat held to one type's minions gives up 0.15 places as long as it can buy spells. It buys them, and only 7% to 13% of its boards on turn 13 are of the type. A seat that loses only the spells gives up 0.3 to 0.5 places. A seat that loses both gives up 1.0 to 1.2.
+- **So the network's late game is the board it has on turn 8 plus Tavern spells.** That fits what it buys: from turn 9 in a Beast lobby, 32% of the actions of run B's last network were rolls, 12% bought a spell and 1% bought a minion. The buy limit teaches because it takes the spell away. Assigning a seat its type would not teach the same thing.
+
+The same limit in lobbies of more types (`freeseats.py --tribes 2` and `--tribes 5`; in a five-type lobby the limit leaves every minion of the lobby's types and takes away the Tavern spells and the typeless minions), as the average place of four limited seats against four free seats of the same network:
+
+| Minion types in the lobby | Run B's last network: limited | Free | Run E's last network: limited | Free |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 5.43 | 3.57 | 4.51 | 4.49 |
+| 2 | 5.24 | 3.76 | 4.78 | 4.22 |
+| 5 | 5.28 | 3.72 | 5.15 | 3.85 |
+
+- **The one-type school carried into two-type lobbies and hardly into five-type ones.** The limited seats' deficit fell from 1.9 places to none in one-type lobbies, from 1.5 to 0.6 in two-type lobbies, and from 1.6 to 1.3 in five-type lobbies.
+- **A five-type lobby under the limit has the same lesson left to teach that the one-type lobby had.** Run E closed a gap of that size in 1,800 iterations. School lobbies of five types (`--school-tribes 1:...,2:...,5:...`, no new code) would train the minion game in the lobby that the yardstick is measured in.
+
+With only the Tavern spells taken away in one-type lobbies (`bytype.py --buys minions`), run E's last network holds 1,825 stats on turn 13 on average, against 1,984 with no limit and 2,000 under the full limit. The types differ in which way the limit cuts:
+
+- **In Quilboar lobbies the network chooses wrongly.** Its board holds 4,430 stats when it can buy only Quilboars (98% of the boards are Quilboar boards), 2,183 when it can also buy typeless minions (63%) and 2,505 with spells as well (54%). It builds a board twice as large when the typeless minions are off the menu, and it takes them when they are on it. Mech boards are larger under the limit too (4,258 against 3,684).
+- **In Aberration, Murloc, Dragon and Pirate lobbies free buying is not a mistake.** The free boards are the larger ones (1,510 against 1,112, 1,646 against 1,213, 2,053 against 1,656 and 2,142 against 1,862), so there the limit has taught the type without making it the better choice.
+
+**Run F stopped on an engine panic at iteration 1,207 and was resumed** (2026-11-28). It ran for five hours and ended at 12:44 AM Pacific on `index out of bounds` in `cards::on_activate`.
+
+- **The bug.** Paying for a minion's Activate fires the Gold-spent triggers before the ability resolves. The Gold replaced a `Quartermaster's Hook` (a Pirate trinket that turns into a random Greater one after 40 Gold), and the new trinket completed a Triple at once: a `Designer Eyepatch` makes two Pirates a Golden one, and a `Privateer Portrait` puts a `Proud Privateer` in the hand. The board shrank under the ability, which then read its minion at the old place. It needs a Pirate lobby, that trinket and an Activate on the 40th Gold, which is why 1,200 iterations of one-type lobbies found it and nothing before had.
+- **The engine fix** (`85df78d`). The payment and the ability now share one deferred-Triples pass, as every trigger pass does (`engine/docs/tavern.md` §5): the Triple forms once the ability has resolved. A scenario in `trinkets/quartermasters_hook.yaml` reproduces the panic on the old code.
+- **A crash now costs one play, not the night** (`dee58eb`). An engine panic used to end the worker process and the run with it. It is now a `play.LostPlay` that names the lobbies' seeds, a `Player` whose worker died starts its pool again, and `train_lobby` plays a lost iteration again on other seeds and skips a lost check. More than `--max-lost-plays` (3) of them still stop the run.
+- **The resume.** `--resume runs/school/f/latest.pt --lr 2.5e-5 --anneal-lr --iterations 1200` continues from the save at iteration 1,200 on the original learning-rate schedule (with `--resume` the anneal runs over the new iterations, so half the rate over half the iterations is the same line).
+- **Where it stood.** Its own checks dipped as every restart at this rate has (place 1.93 and 0.8% against human boards at iteration 700) and were coming back at the stop: place 1.75, 1.2%, 1,127 stats on turn 13 at iteration 1,200.
+
+The network saved at iteration 1,200, measured in the cloud as run E's last network was (boards on turn 13):
+
+| Measure | Run E's last network | Run F at 680 | Run F at 1,200 |
+| :--- | :--- | :--- | :--- |
+| One-type lobbies with no limit: median board stats, mean over the types | 1,984 | 1,699 | 1,933 |
+| One-type lobbies under the limit: the same | 2,000 | 1,603 | 1,889 |
+| Quilboar lobbies under the limit | 4,430 | 2,150 | 3,328 |
+| Two-type lobbies with no limit: median board stats | 1,972 | 1,621 | 1,908 |
+| Five-type lobbies with no limit: median board stats | 1,764 | 1,543 | 1,683 |
+| One-type lobbies: place of four limited seats, and of four free seats | 4.51, 4.49 | 4.88, 4.12 | 4.86, 4.14 |
+| Two-type lobbies: the same | 4.78, 4.22 | | 5.00, 4.00 |
+| Five-type lobbies: the same | 5.15, 3.85 | | 5.11, 3.89 |
+
+- **The boards are almost back to run E's, with the cooling half still to come.** Runs B and E made their gains there.
+- **The free seats have pulled ahead of the limited seats again, by 0.7 places.** Run E ended with the two level. Since half the seats of a school lobby buy freely, the free seats win in nine of the ten types (all but Beast), and they do it without playing the type more: in Quilboar lobbies 62% of their boards are Quilboar boards (55% before), their median board holds 1,947 stats and they place 4.17, while the limited seats hold 3,690 and place 4.83.
+- **So a larger board on turn 13 still loses the lobby to a faster one.** It is the finding of run B again: places are decided by the board on turn 11. Seat by seat, the limit's lesson does not pay yet, and the free seat has no reason to take it up.
+
+Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
 

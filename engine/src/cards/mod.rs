@@ -2001,7 +2001,9 @@ pub fn on_activate(
     pool: &mut CardPool,
     rng: &mut Rng,
 ) {
-    let unit = &state.board[source_pos];
+    let Some(unit) = state.board.get(source_pos) else {
+        return;
+    };
     let Some(activate) = hooks(unit.card_id).activate else {
         return;
     };

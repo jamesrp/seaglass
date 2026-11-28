@@ -17,6 +17,15 @@ use crate::rng::Rng;
 /// Maximum number of units a board can hold at once.
 pub const MAX_BOARD_SIZE: usize = 7;
 
+/// The most attack turns a combat runs before it is called a stall (`docs/combat.md` §5.2).
+///
+/// Some pairs of boards never finish. A minion that takes no damage while attacking and gets its
+/// Divine Shield back on every attack (`Heroic Broodmother` with the `Invulnerability` Dark Gift)
+/// cannot die to attacks, and it never gets through minions with far more Health than it deals
+/// (or ones that keep gaining Health). Without a limit that combat runs until its event list
+/// fills the memory. A combat that is going to be decided ends long before this many turns.
+pub const MAX_ATTACK_TURNS: u32 = 1_000;
+
 /// Complete result of a single deterministic battle (`docs/combat.md` §5.6).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct BattleResult {
@@ -349,7 +358,8 @@ fn with_combat_ids(board: &[Unit], next_id: &mut UnitId) -> Vec<Unit> {
 }
 
 /// Run attack turns, `current` first, until a side has no minions left (`docs/combat.md` §5.2).
-/// Returns `true` if the combat stalled instead: neither side can attack.
+/// Returns `true` if the combat stalled instead: neither side can attack, or the two sides have
+/// taken [`MAX_ATTACK_TURNS`] attack turns between them without finishing.
 fn run_attack_turns(
     mut current: Side,
     side_a: &mut SideCombatState,
@@ -359,9 +369,14 @@ fn run_attack_turns(
     events: &mut Vec<Event>,
 ) -> bool {
     combat_checkpoint(side_a, side_b, next_id, rng, events);
+    let mut turns = 0;
     while !side_a.is_empty() && !side_b.is_empty() {
         let (atk_side, def_side) = sides_mut(current, side_a, side_b);
         if atk_side.can_attack() {
+            if turns == MAX_ATTACK_TURNS {
+                return true;
+            }
+            turns += 1;
             perform_attack_turn(current, atk_side, def_side, next_id, rng, events);
             combat_checkpoint(side_a, side_b, next_id, rng, events);
             current = current.other();
