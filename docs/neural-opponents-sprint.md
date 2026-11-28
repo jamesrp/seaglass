@@ -742,6 +742,45 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **Before the school the limited seats lost in every type, by almost a place on average. Now they win in four.** In Demon, Undead, Quilboar and Beast lobbies the seats that can buy only the type place ahead of the seats that buy freely, so there the network plays the type better than it chooses to. In Aberration, Murloc and Pirate lobbies free buying is still more than a place ahead.
 - **The next step takes the limit away seat by seat** (`train_lobby --school-buys-share`, `GameSpec.free_units`). Each unit of a school lobby is left off the limit with chance one minus the share. A free seat sits next to limited seats that play the type, and its buys of spells and typeless minions are now trained against the type's minions, with the play that follows them already learned. Lobbies of two types (`--school-tribes 1:0.3,2:0.2`) carry the choice between types toward the five-type lobby.
 
+**Run E's last network: it plays every type better, and the five-type game does not show it yet** (all 1,800 iterations, 7.5 hours; one-type lobbies as above, boards on turn 13; the last two columns are the average place of four seats under the limit against four free seats of the same network, `freeseats.py`):
+
+| The lobby's type | Board stats under the limit, run B's last network | Same, run E's | Board stats with no limit, run B's last network | Same, run E's | Win rate against human boards with no limit, run B's last network | Same, run E's | Place of the limited seats, run B's last network | Same, run E's |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 4,258 | 3,225 | 3,684 | 6.3% | 6.4% | 4.87 | 4.45 |
+| Dragon | 1,485 | 1,656 | 1,732 | 2,053 | 5.3% | 5.9% | 5.29 | 4.71 |
+| Pirate | 1,521 | 1,862 | 2,268 | 2,142 | 3.6% | 3.7% | 5.66 | 4.93 |
+| Demon | 1,464 | 2,161 | 1,533 | 2,342 | 1.4% | 2.7% | 5.43 | 4.34 |
+| Elemental | 1,157 | 1,601 | 1,483 | 1,756 | 1.2% | 2.7% | 5.50 | 4.39 |
+| Aberration | 653 | 1,112 | 1,281 | 1,510 | 0.6% | 1.0% | 6.02 | 5.14 |
+| Murloc | 668 | 1,213 | 1,266 | 1,646 | 0.9% | 2.0% | 5.84 | 4.87 |
+| Quilboar | 1,218 | 4,430 | 1,162 | 2,505 | 0.9% | 3.3% | 5.53 | 4.15 |
+| Undead | 899 | 1,016 | 1,070 | 1,241 | 0.6% | 0.6% | 4.51 | 3.89 |
+| Beast | 357 | 687 | 856 | 960 | 0.4% | 1.7% | 5.64 | 4.20 |
+| Mean over the types | 1,293 | 2,000 | 1,588 | 1,984 | 2.1% | 3.0% | 5.43 | 4.51 |
+
+- **Under the limit every type's board is larger, and Quilboar boards are 3.6 times as large.** A Quilboar board holds 4,430 stats, more than a Mech board. Beast, Murloc and Aberration boards are 1.7 to 1.9 times as large, Demon and Elemental boards 1.4 to 1.5 times.
+- **With no limit the one-type boards are 25% larger on average,** and they win 3.0% against human boards, from 2.1% (32% from 26% at a tenth of the human stats). Quilboar boards doubled and Demon boards are half again as large.
+- **Limited seats are now level with free seats.** Before the school a seat that could buy only the lobby's type finished at 5.43 on average against free seats of the same network. Now it finishes at 4.51, and ahead of them in Undead, Quilboar, Beast, Demon, Elemental and Mech lobbies. In those six types the network plays the type better than it chooses to.
+- **It buys the lobby's minions three times as often.** In the weak types with no limit it takes 5.5% of the lobby's minions it is shown from turn 9 on, from 1.6%, and 10.9% of the Tier 5 and 6 ones, from 3.7%. 22 of 76 Tier 5 and 6 cards are never bought, from 43 of 78.
+
+On the five-type ladder (fast ladder, 500 lobbies) it is level with run B's last network in place and a little behind in boards:
+
+| Network | Curve | Place | Median board stats, turn 13 | Tier 5 and 6 minions, turn 13 | Win rate against human boards, turn 13 | Same, human stats at 10% |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Run B, iteration 1800 | standard | 1.77 ± 0.05 | 1,397 | 2.5 | 1.8% | 23.1% |
+| Run B, iteration 1800, another seed | standard | 1.78 ± 0.06 | 1,294 | 2.5 | 1.6% | 22.2% |
+| Run E, iteration 1800 | standard | 1.73 ± 0.05 | 1,347 | 2.2 | 1.5% | 21.6% |
+| Run E, iteration 1800, another seed | standard | 1.78 ± 0.05 | 1,208 | 2.2 | 1.2% | 19.8% |
+| Run B, iteration 1800 | none | 1.78 ± 0.05 | 1,238 | 1.0 | 1.1% | 18.6% |
+| Run E, iteration 1800 | none | 1.81 ± 0.05 | 1,137 | 0.8 | 0.8% | 16.4% |
+
+- **Head to head against iteration 1870 with no curve it is level, as run B's was** (+0.08 ± 0.09, four seats each over 400 lobbies; run B's last network: +0.07 ± 0.09).
+- **In five-type lobbies it still plays Mech, Dragon and Pirate.** Quilboar boards are 0.5% of the seats in a lobby that has Quilboars, as before, and the median board on turn 13 holds 1,764 stats against 1,798 (`boardtypes.py --tribes 5`).
+- **In two-type lobbies the lesson shows.** The median board holds 1,972 stats, from 1,742. Elemental boards went from 14% to 35% of the seats that could play them, Beast boards from 12% to 25%, Undead from 37% to 47% and Demon from 30% to 39%, and boards of no type fell from 21% to 13%. Quilboar stays at 11%.
+- **What this says.** The buy limit works as a teacher: in a school lobby the network now makes six more types work. What it has not learned is to choose them. In a five-type lobby one of its three old types is on offer nine times in ten, and nothing there asks it to compare.
+
+**Run F takes the limit away seat by seat** (`runs/school/f` on the Mac mini, started 2026-11-27 at 7:39 PM Pacific from run E's last network: `--school-tribes 1:0.3,2:0.2 --school-buys own --school-buys-share 0.5 --seed 4`, 2,400 iterations, otherwise as run E). Half the units of a school lobby buy freely next to limited ones, and two lobbies in ten have two types. It is judged by the one-type boards with no limit, by which types are played in two-type and five-type lobbies, and by the five-type ladder.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
