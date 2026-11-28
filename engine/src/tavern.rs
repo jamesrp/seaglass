@@ -2469,8 +2469,13 @@ impl TavernState {
                 let cid = self.board[board_pos].card_id;
                 let cost = cards::activate_cost(cid).unwrap_or(0);
                 self.board[board_pos].activated_this_turn = true;
-                self.spend_gold(cost, pool, rng);
-                cards::on_activate(self, board_pos, target_pos, pool, rng);
+                // The ability resolves on the board it was chosen on: a Triple that the payment
+                // completes waits for it (`docs/tavern.md` §5; a `Quartermaster's Hook` that the
+                // Gold replaces with a `Designer Eyepatch`).
+                self.with_deferred_triples(|state| {
+                    state.spend_gold(cost, pool, rng);
+                    cards::on_activate(state, board_pos, target_pos, pool, rng);
+                });
                 Ok(false)
             }
             TavernAction::Refresh => {

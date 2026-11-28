@@ -8,3 +8,18 @@ scenarios:
       - expect: {auras: {trinkets: [{name: Quartermaster's Hook, counter: 39}]}}
       - refresh
     expect: {auras: {trinkets: {count: 1, 0: {name: {not: Quartermaster's Hook}, greater: true}}}}
+
+  # The 1 Gold of the Activate replaces the Hook. A Designer Eyepatch then makes the two Buskers a
+  # Golden one, and a Privateer Portrait's Proud Privateer makes a Triple: both wait for the ability.
+  - name: a_triple_formed_by_the_payment_of_an_activate_waits_for_the_ability
+    seeds: "1..=40"
+    tavern:
+      gold: 1
+      board: [Southsea Busker, Southsea Busker, Proud Privateer, Proud Privateer, Deft Deserter]
+      shop: [Iron Groundskeeper]
+      auras: {trinkets: [{trinket: Quartermaster's Hook, counter: 39}]}
+    steps:
+      - activate: Deft Deserter
+    expect:
+      shop: [{card: Iron Groundskeeper, stats: "10/10"}]
+      auras: {trinkets: {count: 1, 0: {name: {not: Quartermaster's Hook}, greater: true}}}
