@@ -691,6 +691,40 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 - **The three strong types gave a little back,** as every run has in its warm first half: Mech and Dragon boards are 4% to 10% smaller under the limit.
 - **The five-type ladder has not moved yet.** The checks stand at place 1.89 and 1.0% to 1.1% against human boards at iteration 600, in the same dip runs B and D had there (2.08 and 1.2%, 2.01 and 0.8%). Runs B and D gained on the ladder only in their second half, so the last network decides.
 
+**Run E at two thirds: two types hold what they learned, and none of it leaves the school yet** (iteration 1190; the same measures, median board stats on turn 13):
+
+| The lobby's type | Under the limit, run B's last network | Same, run E at 630 | Same, run E at 1190 | No limit, run B's last network | Same, run E at 630 | Same, run E at 1190 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 3,512 | 3,151 | 4,029 | 3,225 | 3,286 | 4,010 |
+| Dragon | 1,485 | 1,421 | 1,728 | 1,732 | 1,607 | 1,976 |
+| Pirate | 1,521 | 1,682 | 1,790 | 2,268 | 1,993 | 2,082 |
+| Demon | 1,464 | 2,221 | 2,226 | 1,533 | 1,910 | 2,126 |
+| Elemental | 1,157 | 1,528 | 1,356 | 1,483 | 1,618 | 1,669 |
+| Aberration | 653 | 956 | 977 | 1,281 | 1,395 | 1,391 |
+| Murloc | 668 | 1,004 | 1,116 | 1,266 | 1,274 | 1,472 |
+| Quilboar | 1,218 | 3,317 | 3,141 | 1,162 | 2,110 | 1,792 |
+| Undead | 899 | 1,055 | 866 | 1,070 | 1,098 | 1,135 |
+| Beast | 357 | 570 | 490 | 856 | 827 | 738 |
+| Mean over the types | 1,293 | 1,691 | 1,772 | 1,588 | 1,712 | 1,839 |
+
+- **The weak types' gains came in the warm first third and then stopped.** Quilboar, Demon, Murloc and Aberration hold theirs. Undead, Beast and Elemental gave part back. The mean still rose, because Mech and Dragon came back: a Mech board holds 4,029 stats under the limit, from 3,512.
+- **With free buying it builds a smaller Quilboar board than under the limit.** In a Quilboar lobby with no limit its median board holds 1,792 stats and 60% of its boards are Quilboar boards. Under the limit they hold 3,141 and 99% are. The limit masks the buys of spells and typeless minions, so the policy is never trained on the choice between those and the type's minions. With the mask off, its old preference for them is still there.
+- **In lobbies of two and five types it does not play the new types** (`rl/scripts/review/boardtypes.py`, 400 lobbies with no limit, seats alive on turn 13, the board's type by `play.board_type`):
+
+| Boards of the type, of the seats in a lobby that has it | Two-type lobbies, run B's last network | Same, run E at 1190 | Five-type lobbies, run B's last network | Same, run E at 1190 |
+| :--- | :--- | :--- | :--- | :--- |
+| Quilboar | 10.6% | 9.3% | 0.5% | 0.1% |
+| Demon | 30.2% | 38.4% | 3.6% | 2.9% |
+| Elemental | 14.4% | 33.1% | 0.6% | 1.3% |
+| Undead | 37.4% | 48.8% | 3.7% | 5.9% |
+| Mech | 95.7% | 97.7% | 70.8% | 75.7% |
+| Boards of no type, of all seats | 21.1% | 14.6% | 11.9% | 15.2% |
+| Median board stats, all seats | 1,742 | 1,846 | 1,798 | 1,744 |
+
+- **Next to another type, Quilboar is played by 9% of the seats that could, as before the school.** Demon, Elemental and Undead boards are more common in two-type lobbies and typeless boards rarer, and the median board there is 6% larger. In five-type lobbies nothing has changed: Mech, Dragon or Pirate is on offer in 92% of them, and the network takes those.
+- **The five-type ladder says the same.** The checks stand at place 1.85 and 1.2% against human boards at iteration 1175, where run B had 1.90 and 1.45%.
+- **The next step takes the limit away seat by seat** (`train_lobby --school-buys-share`, `GameSpec.free_units`). Each unit of a school lobby is left off the limit with chance one minus the share. A free seat sits next to limited seats that play the type, and its buys of spells and typeless minions are now trained against the type's minions, with the play that follows them already learned. Lobbies of two types (`--school-tribes 1:0.3,2:0.2`) carry the choice between types toward the five-type lobby.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint

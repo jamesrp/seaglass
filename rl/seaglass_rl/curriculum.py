@@ -32,6 +32,11 @@ minions of the lobby's types, so no Tavern spell and no typeless minion. Every s
 limited alike, and the seat that makes the type's cards work wins it. The limit masks Buy actions,
 so the policy still decides everything it does and PPO trains on those decisions as usual. It is a
 hand-written rule on what a seat buys, so `train_lobby --pure` refuses it, and no evaluation has it.
+
+Under the full limit the learner made two more types work and did not play them once it could buy
+freely: the masked buys were never trained against the type's minions. `--school-buys-share` below 1
+leaves each unit of a school lobby off the limit with that chance (`GameSpec.free_units`), next to
+limited seats that play the type. That is how the limit is taken away again.
 """
 
 from __future__ import annotations

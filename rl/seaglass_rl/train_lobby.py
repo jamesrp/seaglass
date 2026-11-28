@@ -29,7 +29,8 @@ model seat on a fixed curve, so the learner plays the late game it otherwise nev
 `--force-share` below 1 leaves some seats to level by themselves, to take the scaffold away again.
 `--school-tribes` is the "type school" scaffold: a share of the training lobbies has fewer minion
 types (`1:0.5`: half of them have one), so the learner has to make every type's cards work. With
-`--school-buys own` a model seat of such a lobby can buy only minions of the lobby's types. The
+`--school-buys own` a model seat of such a lobby can buy only minions of the lobby's types, and
+`--school-buys-share` below 1 leaves some units off that limit, to take it away again. The
 evaluation keeps `--tribes` and has no buy limit.
 
 The run directory holds `args.json`, `log.jsonl` (one line per iteration), `latest.pt`,
@@ -156,6 +157,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="any",
         help="with --school-tribes: what a model seat of a school lobby can buy. own: only minions of the lobby's "
         "types (no Tavern spell, no typeless minion); minions: only minions; any (default): no limit",
+    )
+    p.add_argument(
+        "--school-buys-share",
+        type=float,
+        default=1.0,
+        help="with --school-buys: the chance that a unit of a school lobby is under the buy limit. The rest buy "
+        "freely, next to limited seats, which is how the limit is taken away again (default 1: every unit)",
     )
     p.add_argument("--snapshot-every", type=int, default=10)
     p.add_argument("--pool-recent", type=int, default=4, help="the latest snapshots that are opponents every iteration")
@@ -363,17 +371,21 @@ def make_specs(
     seed: int,
     force_share: float = 1.0,
     type_mix: TypeMix = (),
+    buys_share: float = 1.0,
 ) -> list[GameSpec]:
     """The iteration's games: the learner in `learner_units` random units, the league in the rest.
     Each opponent seat is a rule bot from `bots` (uniformly) with chance `p_bot`, or a snapshot from
     `opponents`; with no snapshot yet it is always a bot. With no snapshot and no bots (`p_bot` 0
     or `bots` empty), the learner fills every unit. With `force_share` below 1, each unit is left
     off the forced curve (`GameSpec.unforced_units`) with chance `1 - force_share`. With a
-    `type_mix`, each game's lobby has the minion types the mix draws for it (`GameSpec.tribes`)."""
+    `type_mix`, each game's lobby has the minion types the mix draws for it (`GameSpec.tribes`), and
+    with `buys_share` below 1 each unit of such a lobby is left off the buy limit
+    (`GameSpec.free_units`) with chance `1 - buys_share`."""
     specs = []
-    # Their own streams, so the seating is the same with and without a curve or a mix.
+    # Their own streams, so the seating is the same with and without a curve, a mix or a buy limit.
     force_rng = random.Random(seed * 31 + 7)
     type_rng = random.Random(seed * 37 + 11)
+    buys_rng = random.Random(seed * 41 + 13)
     for g in range(games):
         controllers = []
         everyone = not opponents and (p_bot <= 0 or not bots)
@@ -387,7 +399,14 @@ def make_specs(
                 controllers.append(rng.choice(opponents))
         unforced = () if force_share >= 1.0 else tuple(u for u in range(config.units) if force_rng.random() >= force_share)
         tribes = draw_types(type_mix, type_rng.random()) if type_mix else None
-        specs.append(GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced, tribes=tribes))
+        free = (
+            ()
+            if tribes is None or buys_share >= 1.0
+            else tuple(u for u in range(config.units) if buys_rng.random() >= buys_share)
+        )
+        specs.append(
+            GameSpec(seed=seed + g, controllers=controllers, unforced_units=unforced, tribes=tribes, free_units=free)
+        )
     return specs
 
 
@@ -430,6 +449,10 @@ def main(argv: list[str] | None = None) -> None:
     mix = type_mix(args)  # and a bad --school-tribes
     if args.school_buys != "any" and not mix:
         raise SystemExit("--school-buys limits the buys in school lobbies: it needs --school-tribes")
+    if not 0.0 <= args.school_buys_share <= 1.0:
+        raise SystemExit("--school-buys-share is a chance: 0..1")
+    if args.school_buys_share < 1.0 and args.school_buys == "any":
+        raise SystemExit("--school-buys-share leaves units off the buy limit: it needs --school-buys")
     if args.pure and args.school_buys != "any":
         # The limit is a hand-written rule on what a seat buys.
         raise SystemExit("--pure trains with no hand-written play rule: no --school-buys")
@@ -500,6 +523,7 @@ def main(argv: list[str] | None = None) -> None:
                 seed=args.seed * 10_000_019 + it * 1000,
                 force_share=args.force_share if args.force_curve is not None else 1.0,
                 type_mix=mix,
+                buys_share=args.school_buys_share,
             )
             source = (dict(model.config), cpu_state_dict(model))
             sources: dict[str, Any] = {LEARNER: source}

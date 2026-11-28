@@ -110,7 +110,8 @@ On the curve the network reached Tier 6 and went on buying the ten high-tier car
 - **It changes which lobbies are played, and no decision inside them.** The lobby's types are already an input of the network (`LobbyContext.tribes`), so it can tell a one-type lobby from a full one.
 - **The evaluation keeps `--tribes`,** so a type school's checks compare with every other run's.
 - **`--school-buys own` adds the buy limit.** A model seat of a school lobby can buy only minions of the lobby's types: no Tavern spell and no typeless minion (`minions` allows every minion). Without it the network rolls past the lobby's minions and buys spells for the board it already has. The limit masks Buy actions, so every decision is still the policy's own. Rule bots, the other lobbies and every evaluation are not limited, and `--pure` refuses it.
-- **`scripts/review/bytype.py`** measures the result: the boards a network builds in lobbies of one type, type by type (`--buys own` plays them under the limit).
+- **`--school-buys-share 0.5` takes the limit away seat by seat.** Each unit of a school lobby is left off the limit with chance one minus the share (`GameSpec.free_units`). Under the full limit the policy is never trained on the choice between a spell and the type's minion, so with the limit off it goes back to the spell. A free seat next to limited ones learns that choice.
+- **`scripts/review/bytype.py`** measures the result: the boards a network builds in lobbies of one type, type by type (`--buys own` plays them under the limit). **`scripts/review/boardtypes.py`** counts how often each type is played in lobbies of several types with no limit, which is where the lesson has to arrive.
 
 ```bash
 python -m seaglass_rl.train_lobby --run-dir runs/types --init runs/school/b/latest.pt \

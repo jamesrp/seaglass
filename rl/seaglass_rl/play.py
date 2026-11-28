@@ -280,6 +280,7 @@ class PlayOptions:
     # seat can buy only minions of one of the lobby's types, so no Tavern spell and no typeless
     # minion. "minions": only minions. The other Buy actions are masked out, and what a seat gets
     # any other way (a Discover, a Triple Reward, a Hero Power) is not limited. None: no limit.
+    # The units in `GameSpec.free_units` are left off it.
     school_buys: str | None = None
     # The forced leveling curve (`curriculum.py`; a training scaffold): `(turn, Tavern Tier)` steps.
     # On a forced seat, whenever it is the seat's turn to act, its Tier is below the curve's for the
@@ -303,6 +304,8 @@ class GameSpec:
     unforced_units: tuple[int, ...] = ()
     # The minion types in this game's lobby, in place of `LobbyConfig.tribes` (None: the config's).
     tribes: int | None = None
+    # The units left off type school's buy limit (`PlayOptions.school_buys`).
+    free_units: tuple[int, ...] = ()
 
 
 @dataclass
@@ -567,7 +570,12 @@ def play_games(
                 and (opts.forced_controllers is None or ctrl in opts.forced_controllers)
                 and game.unit_of(p) not in spec.unforced_units
             )
-            if opts.school_buys is not None and spec.tribes is not None and st.bot is None:
+            if (
+                opts.school_buys is not None
+                and spec.tribes is not None
+                and st.bot is None
+                and game.unit_of(p) not in spec.free_units
+            ):
                 st.buy_limit = opts.school_buys
             row.append(st)
         seats.append(row)
