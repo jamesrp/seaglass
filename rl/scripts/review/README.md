@@ -24,6 +24,7 @@ python scripts/review/shoptake.py 9500000 120 $REVIEW_DIR/shoptake.json --curve 
 python scripts/review/whatwins.py 9700000 400 $REVIEW_DIR/whatwins.json --curve standard --cap 80 --turn 11
 python scripts/review/bytype.py 9800000 400 $REVIEW_DIR/bytype.json --tribes 1 --curve standard --cap 80
 python scripts/review/boardtypes.py 9850000 400 $REVIEW_DIR/boardtypes.json --tribes 2 --curve standard --cap 80
+python scripts/review/freeseats.py 9870000 400 $REVIEW_DIR/freeseats.json --tribes 1 --curve standard --cap 80
 ```
 
 `watch.py` writes one `MODE_SEED.json` (the per-turn log of all eight seats) and one `MODE_SEED.replay.pb` (the engine replay) per lobby. It runs one lobby at a time in one process, so start several with different seed ranges to use more cores.
@@ -41,6 +42,7 @@ python scripts/review/boardtypes.py 9850000 400 $REVIEW_DIR/boardtypes.json --tr
 | `whatwins.py` | What wins a place among the net's own seats: the average final place by the Tier 5 and 6 minions, the total stats and the minion type of a seat's board on one turn. |
 | `bytype.py` | What the net builds in lobbies of one minion type (`--tribes 1`), type by type: board stats on turns 11 and 13, Tier 5 and 6 minions, the win rate against human boards, and how many boards are of the lobby's type. `--buys own` plays under type school's buy limit (only minions of the lobby's types can be bought). |
 | `boardtypes.py` | Which minion type a seat plays when the lobby offers it: boards of each type among the seats alive on turn 13 in lobbies of `--tribes` types that have the type, with no buy limit. |
+| `freeseats.py` | Four seats under type school's buy limit against four free seats of the same net in one lobby: both sides' average place and boards on turn 13, by the lobby's type. |
 | `export.py` | Collects the numbers behind the review's two charts into `chartdata.json`. |
 | `cardtext.py` | Pulls each card's rules text from the engine's doc comments. |
 

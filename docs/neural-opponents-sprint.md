@@ -723,6 +723,23 @@ The counts are in `whatwins_*.json` in the same folder. The no-curve row was pla
 
 - **Next to another type, Quilboar is played by 9% of the seats that could, as before the school.** Demon, Elemental and Undead boards are more common in two-type lobbies and typeless boards rarer, and the median board there is 6% larger. In five-type lobbies nothing has changed: Mech, Dragon or Pirate is on offer in 92% of them, and the network takes those.
 - **The five-type ladder says the same.** The checks stand at place 1.85 and 1.2% against human boards at iteration 1175, where run B had 1.90 and 1.45%.
+- **Seat for seat, the school closed most of the gap between its type play and its free play** (`rl/scripts/review/freeseats.py`, 400 one-type lobbies, four seats under the limit against four free seats of the same network; average place, and for run E the median board stats on turn 13):
+
+| The lobby's type | Run B's last network, free seats | Same, limited seats | Run E at 1190, free seats | Same, limited seats | Run E at 1190, board stats of free seats | Same, limited seats |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Mech | 4.13 | 4.87 | 4.30 | 4.70 | 3,770 | 3,544 |
+| Dragon | 3.71 | 5.29 | 4.31 | 4.69 | 1,810 | 1,736 |
+| Pirate | 3.34 | 5.66 | 3.81 | 5.19 | 1,930 | 1,921 |
+| Demon | 3.57 | 5.43 | 4.98 | 4.02 | 2,074 | 2,135 |
+| Elemental | 3.50 | 5.50 | 4.42 | 4.58 | 1,562 | 1,378 |
+| Aberration | 2.98 | 6.02 | 3.45 | 5.55 | 1,254 | 1,007 |
+| Murloc | 3.16 | 5.84 | 3.50 | 5.50 | 1,226 | 1,318 |
+| Quilboar | 3.47 | 5.53 | 4.65 | 4.35 | 1,846 | 2,916 |
+| Undead | 4.49 | 4.51 | 4.99 | 4.01 | 1,089 | 985 |
+| Beast | 3.36 | 5.64 | 4.58 | 4.42 | 826 | 591 |
+| Mean over the types | 3.57 | 5.43 | 4.30 | 4.70 | | |
+
+- **Before the school the limited seats lost in every type, by almost a place on average. Now they win in four.** In Demon, Undead, Quilboar and Beast lobbies the seats that can buy only the type place ahead of the seats that buy freely, so there the network plays the type better than it chooses to. In Aberration, Murloc and Pirate lobbies free buying is still more than a place ahead.
 - **The next step takes the limit away seat by seat** (`train_lobby --school-buys-share`, `GameSpec.free_units`). Each unit of a school lobby is left off the limit with chance one minus the share. A free seat sits next to limited seats that play the type, and its buys of spells and typeless minions are now trained against the type's minions, with the play that follows them already learned. Lobbies of two types (`--school-tribes 1:0.3,2:0.2`) carry the choice between types toward the five-type lobby.
 
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
