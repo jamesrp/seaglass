@@ -826,6 +826,23 @@ With only the Tavern spells taken away in one-type lobbies (`bytype.py --buys mi
 - **The resume.** `--resume runs/school/f/latest.pt --lr 2.5e-5 --anneal-lr --iterations 1200` continues from the save at iteration 1,200 on the original learning-rate schedule (with `--resume` the anneal runs over the new iterations, so half the rate over half the iterations is the same line).
 - **Where it stood.** Its own checks dipped as every restart at this rate has (place 1.93 and 0.8% against human boards at iteration 700) and were coming back at the stop: place 1.75, 1.2%, 1,127 stats on turn 13 at iteration 1,200.
 
+The network saved at iteration 1,200, measured in the cloud as run E's last network was (boards on turn 13):
+
+| Measure | Run E's last network | Run F at 680 | Run F at 1,200 |
+| :--- | :--- | :--- | :--- |
+| One-type lobbies with no limit: median board stats, mean over the types | 1,984 | 1,699 | 1,933 |
+| One-type lobbies under the limit: the same | 2,000 | 1,603 | 1,889 |
+| Quilboar lobbies under the limit | 4,430 | 2,150 | 3,328 |
+| Two-type lobbies with no limit: median board stats | 1,972 | 1,621 | 1,908 |
+| Five-type lobbies with no limit: median board stats | 1,764 | 1,543 | 1,683 |
+| One-type lobbies: place of four limited seats, and of four free seats | 4.51, 4.49 | 4.88, 4.12 | 4.86, 4.14 |
+| Two-type lobbies: the same | 4.78, 4.22 | | 5.00, 4.00 |
+| Five-type lobbies: the same | 5.15, 3.85 | | 5.11, 3.89 |
+
+- **The boards are almost back to run E's, with the cooling half still to come.** Runs B and E made their gains there.
+- **The free seats have pulled ahead of the limited seats again, by 0.7 places.** Run E ended with the two level. Since half the seats of a school lobby buy freely, the free seats win in nine of the ten types (all but Beast), and they do it without playing the type more: in Quilboar lobbies 62% of their boards are Quilboar boards (55% before), their median board holds 1,947 stats and they place 4.17, while the limited seats hold 3,690 and place 4.83.
+- **So a larger board on turn 13 still loses the lobby to a faster one.** It is the finding of run B again: places are decided by the board on turn 11. Seat by seat, the limit's lesson does not pay yet, and the free seat has no reason to take it up.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
