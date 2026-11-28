@@ -1,0 +1,1 @@
+{"net": "runs/school/e/latest.pt (iteration 1800)", "lobbies": 400, "seed": 9870000, "tribes": 5, "curve": "standard", "cap": 80, "turn": 13, "by_types": [{"types": "all", "lobbies": 400, "free": {"place": 3.85, "seats": 930, "median_stats": 1614.0, "own_type": 0.8053763440860215}, "limited": {"place": 5.15, "seats": 543, "median_stats": 1565, "own_type": 0.8397790055248618}}]}

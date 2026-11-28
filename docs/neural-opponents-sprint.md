@@ -781,6 +781,43 @@ On the five-type ladder (fast ladder, 500 lobbies) it is level with run B's last
 
 **Run F takes the limit away seat by seat** (`runs/school/f` on the Mac mini, started 2026-11-27 at 7:39 PM Pacific from run E's last network: `--school-tribes 1:0.3,2:0.2 --school-buys own --school-buys-share 0.5 --seed 4`, 2,400 iterations, otherwise as run E). Half the units of a school lobby buy freely next to limited ones, and two lobbies in ten have two types. It is judged by the one-type boards with no limit, by which types are played in two-type and five-type lobbies, and by the five-type ladder.
 
+**What the limit takes away is the Tavern spell** (measured in the cloud on run E's last network while run F trains). Could a seat simply be told which type to play? In five-type lobbies that offer a type, two seats can buy only that type's minions and no Tavern spell from a given turn on, and six seats of the same network buy freely (`committed.py`, 160 lobbies a cell; average place of the two committed seats, with the six free seats' place in brackets):
+
+| The type | Committed from turn 1 | From turn 6 | From turn 8 |
+| :--- | :--- | :--- | :--- |
+| Quilboar | 6.69 (3.77) | 5.78 (4.07) | 5.28 (4.24) |
+| Demon | 6.71 (3.76) | 5.76 (4.08) | 5.40 (4.20) |
+| Undead | 6.33 (3.89) | 5.56 (4.15) | 5.32 (4.23) |
+| Elemental | 6.81 (3.73) | 5.88 (4.04) | 5.34 (4.22) |
+
+The cost from turn 8 splits into its two halves (`--limit type` and `--limit spells`):
+
+| What the two seats cannot buy from turn 8 | Quilboar lobbies | Demon lobbies |
+| :--- | :--- | :--- |
+| Minions of other types, and Tavern spells | 5.28 (4.24) | 5.40 (4.20) |
+| Minions of other types | 4.62 (4.46) | 4.61 (4.46) |
+| Tavern spells | 4.73 (4.42) | 4.86 (4.38) |
+
+- **A seat cannot commit from the first turn.** It finishes near seventh, and 23 to 53 of the 320 committed seats are alive on turn 13, against 56% to 59% of the free seats. One type is too thin in a five-type shop to build the early board from.
+- **From turn 8 the type costs little, the spells cost more, and the two together cost a place.** A seat held to one type's minions gives up 0.15 places as long as it can buy spells. It buys them, and only 7% to 13% of its boards on turn 13 are of the type. A seat that loses only the spells gives up 0.3 to 0.5 places. A seat that loses both gives up 1.0 to 1.2.
+- **So the network's late game is the board it has on turn 8 plus Tavern spells.** That fits what it buys: from turn 9 in a Beast lobby, 32% of the actions of run B's last network were rolls, 12% bought a spell and 1% bought a minion. The buy limit teaches because it takes the spell away. Assigning a seat its type would not teach the same thing.
+
+The same limit in lobbies of more types (`freeseats.py --tribes 2` and `--tribes 5`; in a five-type lobby the limit leaves every minion of the lobby's types and takes away the Tavern spells and the typeless minions), as the average place of four limited seats against four free seats of the same network:
+
+| Minion types in the lobby | Run B's last network: limited | Free | Run E's last network: limited | Free |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 5.43 | 3.57 | 4.51 | 4.49 |
+| 2 | 5.24 | 3.76 | 4.78 | 4.22 |
+| 5 | 5.28 | 3.72 | 5.15 | 3.85 |
+
+- **The one-type school carried into two-type lobbies and hardly into five-type ones.** The limited seats' deficit fell from 1.9 places to none in one-type lobbies, from 1.5 to 0.6 in two-type lobbies, and from 1.6 to 1.3 in five-type lobbies.
+- **A five-type lobby under the limit has the same lesson left to teach that the one-type lobby had.** Run E closed a gap of that size in 1,800 iterations. School lobbies of five types (`--school-tribes 1:...,2:...,5:...`, no new code) would train the minion game in the lobby that the yardstick is measured in.
+
+With only the Tavern spells taken away in one-type lobbies (`bytype.py --buys minions`), run E's last network holds 1,825 stats on turn 13 on average, against 1,984 with no limit and 2,000 under the full limit. The types differ in which way the limit cuts:
+
+- **In Quilboar lobbies the network chooses wrongly.** Its board holds 4,430 stats when it can buy only Quilboars (98% of the boards are Quilboar boards), 2,183 when it can also buy typeless minions (63%) and 2,505 with spells as well (54%). It builds a board twice as large when the typeless minions are off the menu, and it takes them when they are on it. Mech boards are larger under the limit too (4,258 against 3,684).
+- **In Aberration, Murloc, Dragon and Pirate lobbies free buying is not a mistake.** The free boards are the larger ones (1,510 against 1,112, 1,646 against 1,213, 2,053 against 1,656 and 2,142 against 1,862), so there the limit has taught the type without making it the better choice.
+
 Results are in [`docs/results/stage6/`](results/stage6/). The baselines were written on the code of commit `ab5b139` with only documentation uncommitted, which the files record as a dirty tree.
 
 ### Not in This Sprint
